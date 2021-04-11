@@ -8,12 +8,19 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin/")
 
 project(slam)
+
+find_package(Threads REQUIRED)
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
 include_directories("${PROJECT_SOURCE_DIR}/slam")
 file(GLOB PROJECT_SOURCES "${PROJECT_SOURCE_DIR}/slam/*.cpp")
-find_package(Threads REQUIRED)
 
-add_executable(slam_test
-    "${PROJECT_SOURCE_DIR}/test/test.cpp"
-    ${PROJECT_SOURCES}
-)
-target_link_libraries(slam_test -pthread)
+enable_testing()
+macro(unit_test test_name test_source)
+    add_executable(${test_name} ${test_source} ${PROJECT_SOURCES})
+    add_test(${test_name} ${CMAKE_CURRENT_SOURCE_DIR}/bin/${test_name})
+    target_link_libraries(${test_name} -pthread ${GTEST_LIBRARIES})
+endmacro()
+
+unit_test("util_test" "test/test_util.cpp")

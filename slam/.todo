@@ -1,0 +1,3 @@
+Map: Eigen matrix
+[x, y] raycast(m, [x, y], z_max, d)
+Pose : x, y, theta
