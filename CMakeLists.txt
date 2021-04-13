@@ -10,8 +10,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin/")
 project(slam)
 
 find_package(Threads REQUIRED)
+
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
+
+find_package (Eigen3 REQUIRED)
+INCLUDE_DIRECTORIES (${EIGEN3_INCLUDE_DIR})
 
 include_directories("${PROJECT_SOURCE_DIR}/slam")
 file(GLOB PROJECT_SOURCES "${PROJECT_SOURCE_DIR}/slam/*.cpp")
@@ -24,3 +28,4 @@ macro(unit_test test_name test_source)
 endmacro()
 
 unit_test("util_test" "test/test_util.cpp")
+unit_test("raycast_test" "test/test_raycast.cpp")
