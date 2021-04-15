@@ -15,4 +15,18 @@ operator==(const Pose& lhs, const Pose& rhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y && lhs.theta == rhs.theta;
 }
-}
+
+struct Odometry
+{
+    double rotation_1;
+    double translation;
+    double rotation_2;
+};
+
+struct Velocity
+{
+    double v;
+    double w;
+};
+
+} // namespace slam
