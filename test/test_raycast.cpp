@@ -31,6 +31,19 @@ TEST(TestRaycast, TestRaycastOutsideBoundaries)
     ASSERT_EQ(raycast(map, { 50, 50, 0 }, 1000), expected_output);
 }
 
+TEST(TestRaycast, TestRaycastMeasurementModelClamp)
+{
+    Eigen::MatrixXf map = Eigen::MatrixXf::Zero(100, 100);
+    ASSERT_DOUBLE_EQ(measurement_model_beam(0, 1, map, { 50, 50, 0 }, 1000), 1e-3);
+    ASSERT_DOUBLE_EQ(measurement_model_beam(0, 1, map, { 50, 50, 0 }, 10), 1e-3);
+}
+
+TEST(TestRaycast, TestRaycastMeasurementModelNormalHit)
+{
+    Eigen::MatrixXf map = Eigen::MatrixXf::Zero(100, 100);
+    ASSERT_DOUBLE_EQ(measurement_model_beam(0, 1, map, { 50, 50, 0 }, 1), 0.24297072451914337);
+}
+
 int
 main(int argc, char** argv)
 {

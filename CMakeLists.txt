@@ -27,5 +27,5 @@ macro(unit_test test_name test_source)
     target_link_libraries(${test_name} -pthread ${GTEST_LIBRARIES})
 endmacro()
 
-unit_test("util_test" "test/test_util.cpp")
-unit_test("raycast_test" "test/test_raycast.cpp")
+unit_test("test_util" "test/test_util.cpp")
+unit_test("test_raycast" "test/test_raycast.cpp")
