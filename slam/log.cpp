@@ -43,12 +43,10 @@ static struct
     Callback callbacks[MAX_CALLBACKS];
 } L;
 
-static const char* level_strings[] = { "TRACE", "DEBUG", "INFO",
-                                       "WARN",  "ERROR", "FATAL" };
+static const char* level_strings[] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
 
 #ifdef LOG_USE_COLOR
-static const char* level_colors[] = { "\x1b[94m", "\x1b[36m", "\x1b[32m",
-                                      "\x1b[33m", "\x1b[31m", "\x1b[35m" };
+static const char* level_colors[] = { "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m" };
 #endif
 
 static void
@@ -57,13 +55,10 @@ stdout_callback(log_Event* ev)
     char buf[16];
     buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 #ifdef LOG_USE_COLOR
-    fprintf(reinterpret_cast<FILE*>(ev->udata),
-            "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ", buf,
-            level_colors[ev->level], level_strings[ev->level], ev->file,
-            ev->line);
-#else
-    fprintf(reinterpret_cast<FILE*>(ev->udata), "%s %-5s %s:%d: ", buf,
+    fprintf(reinterpret_cast<FILE*>(ev->udata), "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ", buf, level_colors[ev->level],
             level_strings[ev->level], ev->file, ev->line);
+#else
+    fprintf(reinterpret_cast<FILE*>(ev->udata), "%s %-5s %s:%d: ", buf, level_strings[ev->level], ev->file, ev->line);
 #endif
     vfprintf(reinterpret_cast<FILE*>(ev->udata), ev->fmt, ev->ap);
     fprintf(reinterpret_cast<FILE*>(ev->udata), "\n");
@@ -75,8 +70,7 @@ file_callback(log_Event* ev)
 {
     char buf[64];
     buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
-    fprintf(reinterpret_cast<FILE*>(ev->udata), "%s %-5s %s:%d: ", buf,
-            level_strings[ev->level], ev->file, ev->line);
+    fprintf(reinterpret_cast<FILE*>(ev->udata), "%s %-5s %s:%d: ", buf, level_strings[ev->level], ev->file, ev->line);
     vfprintf(reinterpret_cast<FILE*>(ev->udata), ev->fmt, ev->ap);
     fprintf(reinterpret_cast<FILE*>(ev->udata), "\n");
     fflush(reinterpret_cast<FILE*>(ev->udata));

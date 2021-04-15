@@ -13,8 +13,7 @@ within_boundaries(const Eigen::MatrixXf& map, const int i, const int j)
 }
 
 Pose
-raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
-        double step_size)
+raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance, double step_size)
 {
     const double dx = step_size * std::cos(pose.theta);
     const double dy = step_size * std::sin(-pose.theta);
@@ -41,8 +40,7 @@ raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
         if (!within_boundaries(map, i, j))
             return { -1, -1, 0 };
 
-        if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
-            max_distance_squared)
+        if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) > max_distance_squared)
             return { -1, -1, 0 };
 
         if ((prev_i != i || prev_j != j) && map(i, j))
@@ -54,21 +52,17 @@ raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
 }
 
 double
-measurement_model_beam(double distance, double stddev,
-                       const Eigen::MatrixXf& map, const Pose& pose,
+measurement_model_beam(double distance, double stddev, const Eigen::MatrixXf& map, const Pose& pose,
                        double max_distance, double step_size)
 {
     constexpr double EPSILON = 1e-3;
     const Pose hit = raycast(map, pose, max_distance, step_size);
     if (hit.x == -1)
-        return pdf_normal_distribution_clamp(stddev, distance - max_distance) +
-               EPSILON;
+        return pdf_normal_distribution_clamp(stddev, distance - max_distance) + EPSILON;
 
-    const double distance_ =
-      std::sqrt(std::pow(hit.x - pose.x, 2) + std::pow(hit.y - pose.y, 2));
+    const double distance_ = std::sqrt(std::pow(hit.x - pose.x, 2) + std::pow(hit.y - pose.y, 2));
 
-    return pdf_normal_distribution_clamp(stddev, distance - distance_) +
-           EPSILON;
+    return pdf_normal_distribution_clamp(stddev, distance - distance_) + EPSILON;
 }
 
 } // namespace slam

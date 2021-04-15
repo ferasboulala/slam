@@ -14,8 +14,7 @@ TEST(TestUtil, TestPDFNormalDistribution)
 TEST(TestUtil, TestPDFNormalDistributionClamp)
 {
     ASSERT_DOUBLE_EQ(0.0, pdf_normal_distribution_clamp(1, 5));
-    ASSERT_DOUBLE_EQ(pdf_normal_distribution(1, 0),
-                     pdf_normal_distribution_clamp(1, 0));
+    ASSERT_DOUBLE_EQ(pdf_normal_distribution(1, 0), pdf_normal_distribution_clamp(1, 0));
 }
 
 TEST(TestUtil, TestPDFTriangularDistribution)
