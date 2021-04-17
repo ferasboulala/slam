@@ -31,7 +31,7 @@ pdf_triangular_distribution(double stddev, double x)
 double
 sample_normal_distribution(double stddev)
 {
-    std::default_random_engine generator;
+    static thread_local std::default_random_engine generator;
     std::normal_distribution<double> distribution(0, stddev);
 
     return distribution(generator);
@@ -40,7 +40,7 @@ sample_normal_distribution(double stddev)
 double
 sample_triangular_distribution(double stddev)
 {
-    std::default_random_engine generator;
+    static thread_local std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(-stddev, stddev);
 
     return std::sqrt(6) / 2 * (distribution(generator)) + distribution(generator);
