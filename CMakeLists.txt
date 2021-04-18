@@ -38,7 +38,7 @@ unit_test("test_raycast" "test/test_raycast.cpp")
 # Apps and libraries
 macro(app progname source)
     add_executable(${progname} ${source} ${PROJECT_SOURCES})
-    target_link_libraries(${progname} ${GTEST_LIBRARIES} ${OPENCV_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_videoio -pthread)
+    target_link_libraries(${progname} ${GTEST_LIBRARIES} ${OpenCV_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_videoio -pthread)
 endmacro()
 
 app("motion_model" "apps/motion_model.cpp")
