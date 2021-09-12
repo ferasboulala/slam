@@ -19,8 +19,8 @@ int main(int argc, char** argv)
     Eigen::MatrixXf map(map_image.rows, map_image.cols);
     cv::cv2eigen(map_image, map);
 
-    constexpr int N_RAYS = 10;
-    constexpr double RANGE = M_PI;
+    constexpr int N_RAYS = 1000;
+    constexpr double RANGE = 2 * M_PI;
     constexpr double STEP = RANGE / N_RAYS;
     const double Z_MAX = std::sqrt(std::pow(map.cols(), 2) + std::pow(map.rows(), 2));
     slam::Pose pose{map.cols() / 2.0, map.rows() / 2.0, 0};

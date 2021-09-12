@@ -9,11 +9,11 @@ namespace slam
 
 class MCL
 {
-public:
-    MCL(int n_particles, double alpha_fast=0.9, double alpha_slow=0.1);
+  public:
+    MCL(int n_particles, double alpha_fast = 0.9, double alpha_slow = 0.1);
     ~MCL() = default;
 
-private:
+  private:
     std::vector<Pose> m_points_poses;
     double m_omega_fast;
     double m_omega_slow;

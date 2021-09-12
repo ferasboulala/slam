@@ -1,7 +1,9 @@
+set -e
+
 mkdir -p build bin
 cd build
 
 cmake ..
-make
+make -j$(nproc --all)
 
 cd ..

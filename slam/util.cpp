@@ -9,7 +9,8 @@ namespace slam
 double
 pdf_normal_distribution(double stddev, double x)
 {
-    return 1.0 / stddev / std::sqrt(2 * M_PI) * std::exp(-std::pow(x, 2) / 2 / std::pow(stddev, 2));
+    return 1.0 / stddev / std::sqrt(2 * M_PI) *
+           std::exp(-std::pow(x, 2) / 2 / std::pow(stddev, 2));
 }
 
 double
@@ -25,7 +26,8 @@ double
 pdf_triangular_distribution(double stddev, double x)
 {
     const double variance = std::pow(stddev, 2);
-    return std::max(0.0, 1 / std::sqrt(6 * variance) - std::fabs(x) / 6 / variance);
+    return std::max(0.0,
+                    1 / std::sqrt(6 * variance) - std::fabs(x) / 6 / variance);
 }
 
 double
@@ -43,7 +45,8 @@ sample_triangular_distribution(double stddev)
     static thread_local std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(-stddev, stddev);
 
-    return std::sqrt(6) / 2 * (distribution(generator)) + distribution(generator);
+    return std::sqrt(6) / 2 * (distribution(generator)) +
+           distribution(generator);
 }
 
 double
