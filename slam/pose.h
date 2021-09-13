@@ -2,7 +2,6 @@
 
 namespace slam
 {
-
 struct Pose
 {
     double x;
@@ -27,6 +26,12 @@ struct Velocity
 {
     double v;
     double w;
+};
+
+struct Particle
+{
+    Pose pose;
+    double weight;
 };
 
 } // namespace slam

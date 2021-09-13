@@ -5,7 +5,6 @@
 
 namespace slam
 {
-
 bool
 within_boundaries(const Eigen::MatrixXf& map, const int i, const int j)
 {

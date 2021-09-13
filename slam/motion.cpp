@@ -5,7 +5,6 @@
 
 namespace slam
 {
-
 Pose
 sample_motion_model_odometry(const Odometry& odom, const Pose& pose,
                              std::array<double, 4> alphas)

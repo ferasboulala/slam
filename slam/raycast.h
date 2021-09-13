@@ -8,7 +8,6 @@
 
 namespace slam
 {
-
 Pose raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
              double step_size = 0.2);
 

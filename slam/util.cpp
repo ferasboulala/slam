@@ -1,11 +1,11 @@
 #include "util.h"
 
 #include <cmath>
+#include <chrono>
 #include <random>
 
 namespace slam
 {
-
 double
 pdf_normal_distribution(double stddev, double x)
 {
@@ -34,6 +34,7 @@ double
 sample_normal_distribution(double stddev)
 {
     static thread_local std::default_random_engine generator;
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     std::normal_distribution<double> distribution(0, stddev);
 
     return distribution(generator);
@@ -43,6 +44,7 @@ double
 sample_triangular_distribution(double stddev)
 {
     static thread_local std::default_random_engine generator;
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_real_distribution<double> distribution(-stddev, stddev);
 
     return std::sqrt(6) / 2 * (distribution(generator)) +
@@ -57,6 +59,13 @@ normalize_angle(double angle)
         angle -= 2 * M_PI;
 
     return angle;
+}
+
+
+std::tuple<int, int>
+pose_to_image_coordinates(const Eigen::MatrixXf& map, const Pose &pose)
+{
+   return std::tuple<int, int>(pose.x, map.rows() - pose.y  - 1);
 }
 
 } // namespace slam

@@ -42,6 +42,22 @@ TEST(TestUtil, TestTriangularDistribution)
     ASSERT_TRUE(sample >= -1 && sample <= 1);
 }
 
+TEST(TestUtil, TestPoseToImageCoordinates)
+{
+    const Eigen::MatrixXf map = Eigen::MatrixXf::Zero(100, 100);
+    int x, y;
+
+    auto ret = pose_to_image_coordinates(map, {0, 0, 0});
+    std::tie(x, y) = ret;
+    ASSERT_DOUBLE_EQ(0, x);
+    ASSERT_DOUBLE_EQ(99, y);
+
+    ret = pose_to_image_coordinates(map, {20, 60, 0});
+    std::tie(x, y) = ret;
+    ASSERT_DOUBLE_EQ(20, x);
+    ASSERT_DOUBLE_EQ(39, y);
+}
+
 int
 main(int argc, char** argv)
 {
