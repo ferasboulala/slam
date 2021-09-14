@@ -23,6 +23,7 @@ public:
 
 private:
     void reset_particles();
+    void resample_particles(const Eigen::MatrixXf& map);
 
 public:
     std::vector<Particle> particles;
