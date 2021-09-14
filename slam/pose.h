@@ -9,8 +9,7 @@ struct Pose
     double theta;
 };
 
-inline bool
-operator==(const Pose& lhs, const Pose& rhs)
+inline bool operator==(const Pose& lhs, const Pose& rhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y && lhs.theta == rhs.theta;
 }
@@ -34,4 +33,4 @@ struct Particle
     double weight;
 };
 
-} // namespace slam
+}  // namespace slam

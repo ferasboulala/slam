@@ -1,7 +1,7 @@
 #pragma once
 
-#include "pose.h"
 #include "lidar.h"
+#include "pose.h"
 
 #include <Eigen/Dense>
 
@@ -16,8 +16,9 @@ public:
         double alpha_slow = 0.1);
     ~MCL() = default;
 
-    void predict(const Odometry &odom);
-    void update(const Lidar &lidar, const std::vector<double> &scans, const Eigen::MatrixXf& map);
+    void predict(const Odometry& odom);
+    void update(const Lidar& lidar, const std::vector<double>& scans,
+                const Eigen::MatrixXf& map);
 
     Pose average_pose() const;
 
@@ -36,4 +37,4 @@ private:
     double m_alpha_slow;
 };
 
-} // namespace slam
+}  // namespace slam

@@ -2,8 +2,8 @@
 #include "thirdparty/log.h"
 
 #include <Eigen/Dense>
-#include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/opencv.hpp>
 
 int main(int argc, char** argv)
 {
@@ -22,14 +22,16 @@ int main(int argc, char** argv)
     constexpr int N_RAYS = 1000;
     constexpr double RANGE = 2 * M_PI;
     constexpr double STEP = RANGE / N_RAYS;
-    const double Z_MAX = std::sqrt(std::pow(map.cols(), 2) + std::pow(map.rows(), 2));
+    const double Z_MAX =
+        std::sqrt(std::pow(map.cols(), 2) + std::pow(map.rows(), 2));
     slam::Pose pose{map.cols() / 2.0, map.rows() / 2.0, 0};
     for (int i = 0; i < N_RAYS; ++i)
     {
         pose.theta = STEP * i;
         const slam::Pose hit = slam::raycast(map, pose, Z_MAX);
         if (hit.theta)
-            cv::line(map_image, { (int)hit.x, (int)hit.y }, { (int)pose.x, (int)pose.y }, { 255, 0, 0});
+            cv::line(map_image, {(int)hit.x, (int)hit.y},
+                     {(int)pose.x, (int)pose.y}, {255, 0, 0});
     }
 
     cv::imshow("Raycast", (1 - map_image) * 255);

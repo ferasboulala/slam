@@ -41,18 +41,17 @@ TEST(TestUtil, TestPoseToImageCoordinates)
     int x, y;
 
     auto ret = pose_to_image_coordinates(map, {0, 0, 0});
-    std::tie(x, y) = ret;
+    std::tie(y, x) = ret;
     ASSERT_DOUBLE_EQ(0, x);
     ASSERT_DOUBLE_EQ(99, y);
 
     ret = pose_to_image_coordinates(map, {20, 60, 0});
-    std::tie(x, y) = ret;
+    std::tie(y, x) = ret;
     ASSERT_DOUBLE_EQ(20, x);
     ASSERT_DOUBLE_EQ(39, y);
 }
 
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
