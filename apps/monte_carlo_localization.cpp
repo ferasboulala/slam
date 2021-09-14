@@ -1,4 +1,5 @@
 #include "mcl.h"
+#include "lidar.h"
 #include "util.h"
 #include "thirdparty/log.h"
 
@@ -20,6 +21,8 @@ int main(int argc, char** argv)
 
     Eigen::MatrixXf map(map_image.rows, map_image.cols);
     cv::cv2eigen(map_image, map);
+
+    slam::Lidar lidar(0, M_PI, 500, 100, 1);
 
     slam::MCL mcl(map, 1000);
     const slam::Pose estimate_pose = mcl.average_pose();

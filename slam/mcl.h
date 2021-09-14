@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pose.h"
+#include "lidar.h"
 
 #include <Eigen/Dense>
 
@@ -16,7 +17,7 @@ public:
     ~MCL() = default;
 
     void predict(const Odometry &odom);
-    void update();
+    void update(const Lidar &lidar, const std::vector<double> &scans, const Eigen::MatrixXf& map);
 
     Pose average_pose() const;
 

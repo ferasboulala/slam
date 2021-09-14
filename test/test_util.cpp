@@ -35,13 +35,6 @@ TEST(TestUtil, TestSampleNormalDistribution)
     ASSERT_DOUBLE_EQ(0, sample_normal_distribution(0));
 }
 
-TEST(TestUtil, TestTriangularDistribution)
-{
-    ASSERT_DOUBLE_EQ(0, sample_triangular_distribution(0));
-    const double sample = sample_triangular_distribution(1);
-    ASSERT_TRUE(sample >= -1 && sample <= 1);
-}
-
 TEST(TestUtil, TestPoseToImageCoordinates)
 {
     const Eigen::MatrixXf map = Eigen::MatrixXf::Zero(100, 100);

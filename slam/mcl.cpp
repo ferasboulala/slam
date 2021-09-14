@@ -1,5 +1,7 @@
 #include "mcl.h"
 #include "motion.h"
+#include "raycast.h"
+#include "util.h"
 
 #include <chrono>
 #include <random>
@@ -80,9 +82,21 @@ void MCL::predict(const Odometry &odom)
     }
 }
 
-void MCL::update()
+void MCL::update(const Lidar &lidar, const std::vector<double> &scans, const Eigen::MatrixXf& map)
 {
-
+    const double range = std::abs(normalize_angle(lidar.stop - lidar.start));
+    const double step = range / lidar.n_rays;
+    for (Particle &particle : this->particles)
+    {
+        double weight = 1;
+        Pose pose = particle.pose;
+        for (int i = 0; i < lidar.n_rays; ++i)
+        {
+            weight *= measurement_model_beam(scans[i], lidar.stddev, map, pose, lidar.max_dist);
+            pose.theta += step;
+        }
+        particle.weight = weight;
+    }
 }
 
 } // namespace slam
