@@ -24,6 +24,7 @@ public:
 
 private:
     void reset_particles();
+    void filter_particles(const Eigen::MatrixXf& map);
     void resample_particles(const Eigen::MatrixXf& map);
 
 public:

@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include <Eigen/Dense>
+
 #include <chrono>
 #include <cmath>
 #include <random>
@@ -60,6 +62,11 @@ std::tuple<int, int> pose_to_image_coordinates(const Eigen::MatrixXf& map,
                                                const Pose& pose)
 {
     return std::tuple<int, int>(map.rows() - pose.y - 1, pose.x);
+}
+
+bool within_boundaries(const Eigen::MatrixXf& map, const int i, const int j)
+{
+    return i < map.rows() && j < map.cols() && i >= 0 && j >= 0;
 }
 
 }  // namespace slam

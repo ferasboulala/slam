@@ -17,5 +17,6 @@ double sample_triangular_distribution(double stddev);
 double normalize_angle(double angle);
 std::tuple<int, int> pose_to_image_coordinates(const Eigen::MatrixXf& map,
                                                const Pose& pose);
+bool within_boundaries(const Eigen::MatrixXf& map, const int i, const int j);
 
 }  // namespace slam

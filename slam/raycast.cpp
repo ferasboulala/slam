@@ -5,10 +5,6 @@
 
 namespace slam
 {
-bool within_boundaries(const Eigen::MatrixXf& map, const int i, const int j)
-{
-    return i < map.rows() && j < map.cols() && i >= 0 && j >= 0;
-}
 
 Pose raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
              double step_size)
@@ -37,7 +33,7 @@ Pose raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
         i = std::get<0>(coord);
         j = std::get<1>(coord);
 
-        if (!within_boundaries(map, i, j)) return {-1, -1, 0};
+        if (!within_boundaries(map, i, j)) return {x, y, pose.theta};
 
         if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
             max_distance_squared)
@@ -55,7 +51,7 @@ double measurement_model_beam(double distance, double stddev,
                               const Eigen::MatrixXf& map, const Pose& pose,
                               double max_distance, double step_size)
 {
-    constexpr double EPSILON = 1e-3;
+    constexpr double EPSILON = 0.000001;
     const Pose hit = raycast(map, pose, max_distance, step_size);
     if (hit.x == -1)  // no hit
         return pdf_normal_distribution_clamp(stddev, distance - max_distance) +
