@@ -1,6 +1,7 @@
 #include "raycast.h"
 #include "util.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace slam
@@ -33,11 +34,11 @@ Pose raycast(const Eigen::MatrixXf& map, const Pose& pose, double max_distance,
         i = std::get<0>(coord);
         j = std::get<1>(coord);
 
-        if (!within_boundaries(map, i, j)) return {x, y, pose.theta};
+        if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
 
         if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
             max_distance_squared)
-            return {-1, -1, 0};
+            return {-1, -1, pose.theta};
 
         if ((prev_i != i || prev_j != j) && map(i, j))
             return {x, y, pose.theta};
@@ -51,8 +52,9 @@ double measurement_model_beam(double distance, double stddev,
                               const Eigen::MatrixXf& map, const Pose& pose,
                               double max_distance, double step_size)
 {
-    constexpr double EPSILON = 0.000001;
     const Pose hit = raycast(map, pose, max_distance, step_size);
+
+    constexpr double EPSILON = 0.01;
     if (hit.x == -1)  // no hit
         return pdf_normal_distribution_clamp(stddev, distance - max_distance) +
                EPSILON;
@@ -62,6 +64,17 @@ double measurement_model_beam(double distance, double stddev,
 
     return pdf_normal_distribution_clamp(stddev, distance - distance_) +
            EPSILON;
+}
+
+double measurement_model_beam_score(double distance, double stddev,
+                              const Eigen::MatrixXf& map, const Pose& pose,
+                              double max_distance, double step_size)
+{
+    const Pose hit = raycast(map, pose, max_distance, step_size);
+    const double distance_ = 
+        hit.x == -1 ? max_distance : std::sqrt(std::pow(hit.x - pose.x, 2) + std::pow(hit.y - pose.y, 2));
+    
+    return std::max(0.0, 1 - std::fabs(distance - distance_) / stddev);
 }
 
 }  // namespace slam

@@ -8,6 +8,9 @@
 #include <random>
 #include <cmath>
 
+//#define FITNESS_SELECTION
+static constexpr double RATIO_NEW_PARTICLES = 0.1;
+
 namespace slam
 {
 MCL::MCL(const Eigen::MatrixXf& map, int n_particles, double alpha_fast,
@@ -27,8 +30,7 @@ static Pose random_pose(const Eigen::MatrixXf& map)
     const size_t X_MAX = map.cols();
     const size_t Y_MAX = map.rows();
 
-    static thread_local std::default_random_engine generator;
-    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    thread_local std::mt19937 generator(std::random_device{}());
     std::uniform_real_distribution<double> x_distribution(0, X_MAX - 1);
     std::uniform_real_distribution<double> y_distribution(0, Y_MAX - 1);
     std::uniform_real_distribution<double> theta_distribution(0, 2 * M_PI);
@@ -43,7 +45,7 @@ static Pose random_pose(const Eigen::MatrixXf& map)
 
 void MCL::reset_particles()
 {
-    const double uniform_weight = std::log(1.0 / this->particles.size());
+    const double uniform_weight = 1.0 / this->particles.size();
     for (Particle& particle : this->particles)
     {
         particle.weight = uniform_weight;
@@ -58,16 +60,22 @@ Pose MCL::average_pose() const
     double avg_y = 0;
     double theta_x = 0;
     double theta_y = 0;
+    const int number_new_particles = RATIO_NEW_PARTICLES * this->particles.size();
+    const int particles_to_average = this->particles.size() - number_new_particles;
+    int i = 0;
     for (const Particle& particle : this->particles)
     {
         avg_x += particle.pose.x;
         avg_y += particle.pose.y;
         theta_x += std::cos(particle.pose.theta);
         theta_y += std::sin(particle.pose.theta);
+
+        if (++i == particles_to_average)
+            break;
     }
 
-    avg_x /= this->particles.size();
-    avg_y /= this->particles.size();
+    avg_x /= particles_to_average;
+    avg_y /= particles_to_average;
     const double avg_theta = std::atan2(theta_y, theta_x);
 
     return {avg_x, avg_y, avg_theta};
@@ -97,8 +105,12 @@ void MCL::update(const Lidar& lidar, const std::vector<double>& scans,
         pose.theta -= range / 2;
         for (int i = 0; i < lidar.n_rays; ++i)
         {
+#ifdef FITNESS_SELECTION
+            weight += measurement_model_beam_score(scans[i], lidar.stddev, map, pose, lidar.max_dist);
+#else
             weight += std::log(measurement_model_beam(scans[i], lidar.stddev, map, pose,
                                              lidar.max_dist));
+#endif
             pose.theta += step;
         }
         particle.weight = weight;
@@ -111,6 +123,7 @@ void MCL::update(const Lidar& lidar, const std::vector<double>& scans,
 std::vector<Particle> fitness_selection(const std::vector<Particle> &particles,
                                                 int n)
 {
+    // O(n)
     static thread_local std::default_random_engine generator;
     generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> distribution(1, particles.size() * (particles.size() + 1) / 2);
@@ -127,6 +140,54 @@ std::vector<Particle> fitness_selection(const std::vector<Particle> &particles,
     return new_particles;
 }
 
+std::vector<Particle> probabilistic_fitness_selection(std::vector<Particle> &particles, int n)
+{
+    // O(nlog m) where m = particles.size()
+    double sum = 0;
+    for (Particle &particle : particles)
+    {
+        particle.weight = std::exp(particle.weight);
+        sum += particle.weight;
+    }
+
+    static thread_local std::default_random_engine generator;
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_real_distribution<double> distribution(0, sum);
+
+    std::vector<double> cumulative_sums;
+    cumulative_sums.reserve(particles.size());
+    cumulative_sums.push_back(particles.front().weight);
+    for (unsigned i = 1; i < particles.size(); ++i)
+    {
+        cumulative_sums.push_back(cumulative_sums.back() + particles[i].weight);
+    }
+
+    std::vector<Particle> new_particles;
+    new_particles.reserve(n);
+    for (int k = 0; k < n; ++k)
+    {
+        const double cutoff = distribution(generator);
+        int i = 0;
+        int j = cumulative_sums.size() - 1;
+        while (i < j)
+        {
+            const int mid = i + (j - i) / 2;
+            if (cumulative_sums[mid] == cutoff) {
+                i = mid;
+                j = mid;
+            } else if (cumulative_sums[mid] < cutoff) {
+                i = mid + 1;
+            } else {
+                j = mid;
+            }
+        }
+
+        new_particles.push_back(particles[i]);
+    }
+
+    return new_particles;
+}
+
 void MCL::filter_particles(const Eigen::MatrixXf& map)
 {
     std::vector<Particle> filtered_particles;
@@ -138,7 +199,7 @@ void MCL::filter_particles(const Eigen::MatrixXf& map)
         std::tie(i, j) = coord;
         if (!within_boundaries(map, i, j) || map(i, j))
         {
-            filtered_particles.push_back({random_pose(map), 0});
+            filtered_particles.push_back({random_pose(map), particle.weight});
         }
         else
         {
@@ -151,10 +212,11 @@ void MCL::filter_particles(const Eigen::MatrixXf& map)
 
 void MCL::resample_particles(const Eigen::MatrixXf& map)
 {
-    const int number_of_new_particles = 0.05 * this->particles.size();
+    const int number_of_new_particles = RATIO_NEW_PARTICLES * this->particles.size();
     if (!number_of_new_particles)
         return;
 
+#ifdef FITNESS_SELECTION
     std::sort(this->particles.begin(), this->particles.end(),
         [](const Particle &lhs, const Particle &rhs) { return lhs.weight > rhs.weight; });
 
@@ -165,6 +227,15 @@ void MCL::resample_particles(const Eigen::MatrixXf& map)
     {
         new_particles.push_back({random_pose(map), (this->particles.size() + 1) / 2.0});
     }
+#else
+    std::vector<Particle> new_particles = probabilistic_fitness_selection(
+        this->particles, this->particles.size() - number_of_new_particles);
+
+    for (int i = 0; i < number_of_new_particles; ++i)
+    {
+        new_particles.push_back({random_pose(map), this->particles.back().weight});
+    }
+#endif // FITNESS_SELECTION
 
     std::swap(new_particles, this->particles);
 }

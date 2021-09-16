@@ -23,8 +23,11 @@ public:
     Pose average_pose() const;
 
 private:
+    // Creates random particles.
     void reset_particles();
+    // Filters out particles on obstacles and outside the map.
     void filter_particles(const Eigen::MatrixXf& map);
+    // Selects the best fit particles;
     void resample_particles(const Eigen::MatrixXf& map);
 
 public:

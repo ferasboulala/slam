@@ -57,10 +57,10 @@ int main(int argc, char** argv)
     cv::cv2eigen(map_image, map);
     cv::cvtColor(map_image, map_image, cv::COLOR_GRAY2BGR);
 
-    slam::Lidar lidar(0, 2 * M_PI, 500, 100, 36);
-    slam::MCL mcl(map, 500);
+    slam::Lidar lidar(0, 2 * M_PI, 500, 5, 10);
+    slam::MCL mcl(map, 750);
 
-    slam::Pose real_position{500, 450, M_PI};
+    slam::Pose real_position{450, 400, M_PI};
     cv::Mat map_image_frame;
     map_image.copyTo(map_image_frame);
     while (true)
@@ -71,19 +71,10 @@ int main(int argc, char** argv)
         draw_particle(map_image_frame, map, estimate_pose, {0, 255, 0}, 2,
                       true);
 
-        std::vector<double> alphas;
-        alphas.reserve(mcl.particles.size());
-        for (const slam::Particle &particle : mcl.particles)
-        {
-            alphas.push_back(
-                (particle.weight + mcl.particles.back().weight) / mcl.particles.front().weight);
-        }
-
-        int i = 0;
         for (const slam::Particle& particle : mcl.particles)
         {
             draw_particle(map_image_frame, map, particle.pose, {255, 128, 0}, 1,
-                          CV_FILLED, alphas[i++]);
+                          CV_FILLED);
         }
         cv::imshow("Raycast", map_image_frame * 255);
         map_image.copyTo(map_image_frame);
@@ -133,12 +124,12 @@ int main(int argc, char** argv)
                         {std::get<1>(real_position_coord),
                         std::get<0>(real_position_coord)},
                         {255, 255, 255});
-                dist = lidar.max_dist;
+                dist = std::sqrt(std::pow(hit.y - real_position.y, 2) +
+                                 std::pow(hit.x - real_position.x, 2));
             }
             else
             {
-                dist = std::sqrt(std::pow(hit.y - real_position.y, 2) +
-                                 std::pow(hit.x - real_position.x, 2));
+                dist = lidar.max_dist;
             }
             distances.push_back(dist);
         }
