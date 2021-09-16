@@ -1,7 +1,5 @@
 #include "util.h"
 
-#include <Eigen/Dense>
-
 #include <chrono>
 #include <cmath>
 #include <random>
@@ -56,17 +54,6 @@ double normalize_angle(double angle)
     if (angle > M_PI) angle -= 2 * M_PI;
 
     return angle;
-}
-
-std::tuple<int, int> pose_to_image_coordinates(const Eigen::MatrixXf& map,
-                                               const Pose& pose)
-{
-    return std::tuple<int, int>(map.rows() - pose.y - 1, pose.x);
-}
-
-bool within_boundaries(const Eigen::MatrixXf& map, const int i, const int j)
-{
-    return i < map.rows() && j < map.cols() && i >= 0 && j >= 0;
 }
 
 }  // namespace slam

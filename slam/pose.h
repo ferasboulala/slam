@@ -1,5 +1,7 @@
 #pragma once
 
+#include <opencv2/opencv.hpp>
+
 namespace slam
 {
 struct Pose
@@ -31,6 +33,15 @@ struct Particle
 {
     Pose pose;
     double weight;
+    cv::Mat map;
+};
+
+struct Box
+{
+    int start_i;
+    int start_j;
+    int stop_i;
+    int stop_j;
 };
 
 }  // namespace slam

@@ -43,5 +43,4 @@ macro(app progname source)
 endmacro()
 
 app("motion_model" "apps/motion_model.cpp")
-app("raycast" "apps/raycast.cpp")
 app("monte_carlo_localization" "apps/monte_carlo_localization.cpp")
