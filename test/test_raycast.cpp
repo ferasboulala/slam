@@ -20,7 +20,8 @@ using namespace slam;
 //     Eigen::MatrixXf map(3, 3);
 //     map << 1, 1, 1, 0, 0, 0, 0, 0, 0;
 //     const Pose result = raycast(map, {1, 1, M_PI / 2}, 3);
-//     const auto coord = pose_to_image_coordinates(map, {result.x, result.y, 0});
+//     const auto coord = pose_to_image_coordinates(map, {result.x, result.y,
+//     0});
 //     int i, j;
 //     std::tie(i, j) = coord;
 //     ASSERT_EQ(0, i);

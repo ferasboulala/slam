@@ -10,16 +10,17 @@ Pose sample_motion_model_odometry(const Odometry& odom, const Pose& pose,
 {
     const double rotation_1 =
         odom.rotation_1 - sample_normal_distribution(std::sqrt(
-                              alphas[0] * std::abs(odom.rotation_1) +
-                              alphas[1] * std::abs(odom.translation)));
+                              alphas[0] * std::pow(odom.rotation_1, 2) +
+                              alphas[1] * std::pow(odom.translation, 2)));
     const double translation =
         odom.translation - sample_normal_distribution(std::sqrt(
-                               alphas[2] * std::abs(odom.translation) +
-                               alphas[3] * std::abs(odom.rotation_2)));
+                               alphas[2] * std::pow(odom.translation, 2) +
+                               alphas[3] * (std::pow(odom.rotation_1, 2) +
+                                            ::pow(odom.rotation_2, 2))));
     const double rotation_2 =
         odom.rotation_2 - sample_normal_distribution(std::sqrt(
-                              alphas[0] * std::abs(odom.rotation_2) +
-                              alphas[1] * std::abs(odom.translation)));
+                              alphas[0] * std::pow(odom.rotation_2, 2) +
+                              alphas[1] * std::pow(odom.translation, 2)));
 
     const double x = pose.x + translation * std::cos(pose.theta + rotation_1);
     const double y = pose.y + translation * std::sin(pose.theta + rotation_1);

@@ -1,14 +1,10 @@
 #include "raycast.h"
-#include "util.h"
-
-#include <algorithm>
-#include <cmath>
 
 namespace slam
 {
-
-Pose raycast(const cv::Mat& map, const Pose& pose, double max_distance,
-             double step_size)
+template <>
+Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
+                     double step_size)
 {
     const double dx = step_size * std::cos(pose.theta);
     const double dy = step_size * std::sin(pose.theta);
@@ -33,42 +29,144 @@ Pose raycast(const cv::Mat& map, const Pose& pose, double max_distance,
         coord = pose_to_image_coordinates(map, {x, y, 0});
         std::tie(i, j) = coord;
 
-        if (prev_i == i && prev_j == j) {
+        if (prev_i == i && prev_j == j)
+        {
             continue;
         }
 
-        if (!within_boundaries(map, i, j)) return {x, y, pose.theta};
+        if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
 
         if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
             max_distance_squared)
             return {-1, -1, pose.theta};
 
-        if ((prev_i != i || prev_j != j) && map.at<int>(i, j))
+        if (map.at<double>(i, j) < 0.5)
+        {
             return {x, y, pose.theta};
+        }
 
         prev_i = i;
         prev_j = j;
     }
 }
 
-Pose raycast_mapping(Particle &particle, cv::Mat& occupied, cv::Mat& free,
-             Box &box, double distance, double max_distance, double stddev, double step_size)
+template <>
+Pose raycast<int>(const cv::Mat& map, const Pose& pose, double max_distance,
+                  double step_size)
 {
+    const double dx = step_size * std::cos(pose.theta);
+    const double dy = step_size * std::sin(pose.theta);
+
+    double x = pose.x;
+    double y = pose.y;
+
+    auto coord = pose_to_image_coordinates(map, {x, y, 0});
+    int i = std::get<0>(coord);
+    int j = std::get<1>(coord);
+
+    int prev_i = i;
+    int prev_j = j;
+
+    const double max_distance_squared = std::pow(max_distance, 2);
+
+    while (true)
+    {
+        x += dx;
+        y += dy;
+
+        coord = pose_to_image_coordinates(map, {x, y, 0});
+        std::tie(i, j) = coord;
+
+        if (prev_i == i && prev_j == j)
+        {
+            continue;
+        }
+
+        if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
+
+        if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
+            max_distance_squared)
+            return {-1, -1, pose.theta};
+
+        if (map.at<int>(i, j)) return {x, y, pose.theta};
+
+        prev_i = i;
+        prev_j = j;
+    }
+}
+
+void raycast_mapping(Particle& particle, double z, double z_max,
+                     double step_size)
+{
+    const double dx = step_size * std::cos(particle.pose.theta);
+    const double dy = step_size * std::sin(particle.pose.theta);
+
+    double x = particle.pose.x;
+    double y = particle.pose.y;
+
+    auto coord = pose_to_image_coordinates(particle.map, {x, y, 0});
+    int i = std::get<0>(coord);
+    int j = std::get<1>(coord);
+
+    int prev_i = i;
+    int prev_j = j;
+
+    const double z_squared = z * z;
+    const double z_max_squared = z_max * z_max;
+
+    while (true)
+    {
+        x += dx;
+        y += dy;
+
+        coord = pose_to_image_coordinates(particle.map, {x, y, 0});
+        std::tie(i, j) = coord;
+
+        if (prev_i == i && prev_j == j)
+        {
+            continue;
+        }
+
+        if (!within_boundaries(particle.map, i, j)) return;
+
+        const double L0 = 0.5;
+        const double Locc = 0.8;
+        const double Lfree = 0.2;
+
+        const double distance_squared =
+            std::pow(x - particle.pose.x, 2) + std::pow(y - particle.pose.y, 2);
+
+        if (distance_squared < z_squared)
+        {
+            particle.map.at<double>(i, j) *= Locc / L0;
+            particle.map.at<double>(i, j) =
+                std::min(1.0, particle.map.at<double>(i, j));
+        }
+        else if (z_squared != z_max_squared)
+        {
+            particle.map.at<double>(i, j) *= Lfree / L0;
+            break;
+        }
+
+        prev_i = i;
+        prev_j = j;
+    }
 }
 
 double measurement_model_beam(double distance, double stddev,
-                              Particle &particle, cv::Mat& occupied, cv::Mat& free,
-                              Box &box, double max_distance, double step_size)
+                              Particle& particle, double max_distance,
+                              double step_size)
 {
-    const Pose hit = raycast_mapping(particle, occupied, free, box, distance, max_distance, stddev, step_size);
+    const Pose hit = raycast<double>(particle.map, particle.pose, max_distance);
+    raycast_mapping(particle, distance, max_distance, step_size);
 
-    constexpr double EPSILON = 1e-2;
+    constexpr double EPSILON = 0.1;
     if (hit.x == -1)  // no hit
         return pdf_normal_distribution_clamp(stddev, distance - max_distance) +
                EPSILON;
 
-    const double distance_ =
-        std::sqrt(std::pow(hit.x - particle.pose.x, 2) + std::pow(hit.y - particle.pose.y, 2));
+    const double distance_ = std::sqrt(std::pow(hit.x - particle.pose.x, 2) +
+                                       std::pow(hit.y - particle.pose.y, 2));
 
     return pdf_normal_distribution_clamp(stddev, distance - distance_) +
            EPSILON;

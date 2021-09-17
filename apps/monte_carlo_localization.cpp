@@ -25,22 +25,20 @@ static const cv::Scalar GREEN(0, 1, 0);
 static const cv::Scalar WHITE(1, 1, 1);
 static const cv::Scalar GREY(0.5, 0.5, 0.5);
 
-constexpr double VEL = 10;
+constexpr double VEL = 2.5;
 constexpr double ANG = 0.05;
 
-void draw_particle(cv::Mat& img, const cv::Mat& map,
-                   const slam::Pose& pose, cv::Scalar color, int size,
-                   bool filled = false)
+void draw_particle(cv::Mat& img, const slam::Pose& pose, cv::Scalar color,
+                   int size, bool filled = false)
 {
-    const auto coord = slam::pose_to_image_coordinates(map, pose);
+    const auto coord = slam::pose_to_image_coordinates(img, pose);
     int i, j;
     std::tie(i, j) = coord;
-    const int shift = 1500 / 2; 
-    cv::circle(img, {j - shift, i + shift}, size, color, filled ? CV_FILLED : 0);
+    cv::circle(img, {j, i}, size, color, filled ? CV_FILLED : 0);
 
     const double x = pose.x + 10 * size * std::cos(pose.theta);
     const double y = pose.y + 10 * size * std::sin(pose.theta);
-    const auto coord_ = slam::pose_to_image_coordinates(map, {x, y, 0});
+    const auto coord_ = slam::pose_to_image_coordinates(img, {x, y, 0});
     int i_, j_;
     std::tie(i_, j_) = coord_;
     cv::line(img, {j, i}, {j_, i_}, color);
@@ -52,7 +50,7 @@ slam::Odometry getUserInput(int key)
     switch (static_cast<Key>(key))
     {
         case Key::Q:
-            exit(0);    
+            exit(0);
         case Key::UP:
             odom.translation = VEL;
             break;
@@ -87,24 +85,27 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY_INV);
     map.convertTo(map, CV_32S);
 
-    slam::Lidar lidar(0, 2 * M_PI, 500, 5, 36);
-    slam::MCL mcl(10, {0.01, 0.01, 0.1, 0.1});
-    slam::Pose real_position{450, 400, M_PI};
+    slam::Lidar lidar(0, 2 * M_PI, 1000, 5, 180);
+    slam::MCL mcl(20, {0.001, 0.001, 0.01, 0.01});
+    slam::Pose real_position{400, 400, M_PI};
 
     // This is the image that is displayed every frame
     cv::Mat map_image_frame;
+    constexpr int WAIT_TIME = 25;
+    constexpr int EVERY_OTHER = 200 / WAIT_TIME;
+    int frame = 0;
     while (true)
     {
-        // for (const slam::Particle& particle : mcl.particles)
-        // {
-        //     draw_particle(map_image_frame, map, particle.pose, GREEN, 2,
-        //                   true);
-        // }
-        map_image_frame = mcl.occupancy_grid.clone();
-        map_image_frame.convertTo(map_image_frame, CV_64FC3);
+        map_image_frame = mcl.particles.front().map.clone();
+        map_image_frame.convertTo(map_image_frame, CV_32FC3);
+        cv::cvtColor(map_image_frame, map_image_frame, CV_GRAY2RGB);
+        for (const slam::Particle& particle : mcl.particles)
+        {
+            draw_particle(map_image_frame, particle.pose, GREEN, 3, true);
+        }
         cv::imshow("slam", map_image_frame);
 
-        const int key = cv::waitKey(0);
+        const int key = cv::waitKey(WAIT_TIME);
         const slam::Odometry odom = getUserInput(key);
         mcl.predict(odom);
 
@@ -112,22 +113,28 @@ int main(int argc, char** argv)
         real_position = slam::sample_motion_model_odometry(odom, real_position);
 
         // make this a function
-        const std::vector<slam::Pose> hits = lidar.scan(map, real_position);
-        std::vector<double> distances;
-        distances.reserve(hits.size());
-        for (const slam::Pose& hit : hits)
+        if (++frame % EVERY_OTHER == 0)
         {
-            double dist;
-            if (hit.x != -1) {
-                dist = std::sqrt(std::pow(hit.y - real_position.y, 2) +
-                                 std::pow(hit.x - real_position.x, 2));
-            } else {
-                dist = lidar.max_dist;
+            const std::vector<slam::Pose> hits = lidar.scan(map, real_position);
+            std::vector<double> distances;
+            distances.reserve(hits.size());
+            for (const slam::Pose& hit : hits)
+            {
+                double dist;
+                if (hit.x != -1)
+                {
+                    dist = std::sqrt(std::pow(hit.y - real_position.y, 2) +
+                                     std::pow(hit.x - real_position.x, 2));
+                }
+                else
+                {
+                    dist = lidar.max_dist;
+                }
+                distances.push_back(dist);
             }
-            distances.push_back(dist);
-        }
 
-        mcl.update(lidar, distances);
+            mcl.update(lidar, distances);
+        }
     }
 
     return 0;
