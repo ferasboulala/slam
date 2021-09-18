@@ -11,11 +11,11 @@
 
 enum class Key : int
 {
-    UP = 1113938,
-    LEFT = 1113937,
-    DOWN = 1113940,
-    RIGHT = 1113939,
-    Q = 1048689
+    UP = 82,
+    LEFT = 81,
+    DOWN = 84,
+    RIGHT = 83,
+    Q = 113
 };
 
 static const cv::Scalar CYAN(1, 1, 0);
@@ -34,7 +34,7 @@ void draw_particle(cv::Mat& img, const slam::Pose& pose, cv::Scalar color,
     const auto coord = slam::pose_to_image_coordinates(img, pose);
     int i, j;
     std::tie(i, j) = coord;
-    cv::circle(img, {j, i}, size, color, filled ? CV_FILLED : 0);
+    cv::circle(img, {j, i}, size, color, filled ? cv::FILLED : 0);
 
     const double x = pose.x + 10 * size * std::cos(pose.theta);
     const double y = pose.y + 10 * size * std::sin(pose.theta);
@@ -85,8 +85,8 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY_INV);
     map.convertTo(map, CV_32S);
 
-    slam::Lidar lidar(0, 2 * M_PI, 1000, 5, 180);
-    slam::MCL mcl(20, {0.001, 0.001, 0.01, 0.01});
+    slam::Lidar lidar(0, M_PI, 500, 1, 90);
+    slam::MCL mcl(lidar, 25, {0.001, 0.001, 0.01, 0.01});
     slam::Pose real_position{400, 400, M_PI};
 
     // This is the image that is displayed every frame
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     {
         map_image_frame = mcl.particles.front().map.clone();
         map_image_frame.convertTo(map_image_frame, CV_32FC3);
-        cv::cvtColor(map_image_frame, map_image_frame, CV_GRAY2RGB);
+        cv::cvtColor(map_image_frame, map_image_frame, cv::COLOR_GRAY2RGB);
         for (const slam::Particle& particle : mcl.particles)
         {
             draw_particle(map_image_frame, particle.pose, GREEN, 3, true);
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
                 distances.push_back(dist);
             }
 
-            mcl.update(lidar, distances);
+            mcl.update(distances);
         }
     }
 

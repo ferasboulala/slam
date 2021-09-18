@@ -7,13 +7,15 @@
 #include <chrono>
 #include <cmath>
 #include <random>
+#include <thread>
 
 constexpr int CANVAS_SIZE = 1000;
-constexpr double OCCUPIED_THRESH = 0.5;
 
 namespace slam
 {
-MCL::MCL(int n_particles, const std::array<double, 4> alphas) : m_alphas(alphas)
+MCL::MCL(const Lidar& lidar, int n_particles,
+         const std::array<double, 4> alphas)
+    : lidar(lidar), m_alphas(alphas)
 {
     this->particles.resize(n_particles);
     reset_particles();
@@ -64,24 +66,46 @@ void MCL::predict(const Odometry& odom)
     }
 }
 
-void MCL::update(const Lidar& lidar, const std::vector<double>& scans)
+void MCL::update_inner(const std::vector<double>& scans, int start, int n)
 {
-    const double range = lidar.stop - lidar.start;
+    const double range = this->lidar.stop - this->lidar.start;
     const double step = range / lidar.n_rays;
-    for (Particle& particle : this->particles)
+    for (int i = 0; i < n; ++i)
     {
+        Particle& particle = this->particles[i + start];
         double weight = 0;
         const Pose pose = particle.pose;
         particle.pose.theta -= range / 2;
-        for (int i = 0; i < lidar.n_rays; ++i)
+        for (int i = 0; i < this->lidar.n_rays; ++i)
         {
-            double w = measurement_model_beam(scans[i], lidar.stddev, particle,
-                                              lidar.max_dist);
+            double w = measurement_model_beam(scans[i], this->lidar.stddev,
+                                              particle, this->lidar.max_dist);
             weight += std::log(w);
             particle.pose.theta += step;
         }
         particle.weight = std::exp(weight);
         particle.pose = pose;
+    }
+}
+
+void MCL::update(const std::vector<double>& scans)
+{
+    std::vector<std::thread> threads(std::thread::hardware_concurrency());
+    const int number_particles_per_thread =
+        this->particles.size() / threads.size();
+    for (unsigned i = 0; i < threads.size(); ++i)
+    {
+        const int start = i * number_particles_per_thread;
+        int n = number_particles_per_thread;
+        if (i == threads.size() - 1)
+            n += this->particles.size() % threads.size();
+
+        threads[i] = std::thread(&MCL::update_inner, this, scans, start, n);
+    }
+
+    for (std::thread& thread : threads)
+    {
+        thread.join();
     }
 
     resample_particles();
