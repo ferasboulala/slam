@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
     cv::Mat map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
     // Ends up as a binary image
-    cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY_INV);
+    cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
 
     slam::Lidar lidar(0, 2 * M_PI, 500, 1, 90);

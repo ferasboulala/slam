@@ -12,9 +12,9 @@ Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
     double x = pose.x;
     double y = pose.y;
 
+    int i, j;
     auto coord = pose_to_image_coordinates(map, {x, y, 0});
-    int i = std::get<0>(coord);
-    int j = std::get<1>(coord);
+    std::tie(i, j) = coord;
 
     int prev_i = i;
     int prev_j = j;
@@ -39,10 +39,10 @@ Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
         const double diffx = x - pose.x;
         const double diffy = y - pose.y;
 
-        if (diffx * diffx + diffy * diffy > max_distance_squared)
+        if (diffx * diffx + diffy * diffy >= max_distance_squared)
             return {-1, -1, pose.theta};
 
-        if (map.at<double>(i, j) < 0.5)
+        if (map.at<double>(i, j) < 0.5) // probability that it is free
         {
             return {x, y, pose.theta};
         }
@@ -88,10 +88,10 @@ Pose raycast<int>(const cv::Mat& map, const Pose& pose, double max_distance,
 
         const double diffx = x - pose.x;
         const double diffy = y - pose.y;
-        if (diffx * diffx + diffy * diffy > max_distance_squared)
+        if (diffx * diffx + diffy * diffy >= max_distance_squared)
             return {-1, -1, pose.theta};
 
-        if (map.at<int>(i, j)) return {x, y, pose.theta};
+        if (!map.at<int>(i, j)) return {x, y, pose.theta};
 
         prev_i = i;
         prev_j = j;
@@ -133,8 +133,8 @@ void raycast_mapping(Particle& particle, double z, double z_max,
         if (!within_boundaries(particle.map, i, j)) return;
 
         constexpr double L0 = 0.5;
-        constexpr double Locc = 0.8;
-        constexpr double Lfree = 0.2;
+        constexpr double Locc = 0.2;
+        constexpr double Lfree = 0.8;
 
         const double diffx = x - particle.pose.x;
         const double diffy = y - particle.pose.y;
@@ -142,13 +142,14 @@ void raycast_mapping(Particle& particle, double z, double z_max,
 
         if (distance_squared < z_squared)
         {
-            particle.map.at<double>(i, j) *= Locc / L0;
+            particle.map.at<double>(i, j) *= Lfree / L0;
             particle.map.at<double>(i, j) =
                 std::min(1.0, particle.map.at<double>(i, j));
         }
-        else if (z_squared != z_max_squared)
+        else
         {
-            particle.map.at<double>(i, j) *= Lfree / L0;
+            if (z_squared != z_max_squared)
+                particle.map.at<double>(i, j) *= Locc / L0;
             break;
         }
 
