@@ -35,21 +35,21 @@ TEST(TestUtil, TestSampleNormalDistribution)
     ASSERT_DOUBLE_EQ(0, sample_normal_distribution(0));
 }
 
-// TEST(TestUtil, TestPoseToImageCoordinates)
-// {
-//     const Eigen::MatrixXf map = Eigen::MatrixXf::Zero(100, 100);
-//     int x, y;
+TEST(TestUtil, TestPoseToImageCoordinates)
+{
+    const cv::Mat map(cv::Size(100, 100), CV_32S, cv::Scalar(0));
+    int x, y;
 
-//     auto ret = pose_to_image_coordinates(map, {0, 0, 0});
-//     std::tie(y, x) = ret;
-//     ASSERT_DOUBLE_EQ(0, x);
-//     ASSERT_DOUBLE_EQ(99, y);
+    auto ret = pose_to_image_coordinates(map, {0, 0, 0});
+    std::tie(y, x) = ret;
+    ASSERT_DOUBLE_EQ(0, x);
+    ASSERT_DOUBLE_EQ(99, y);
 
-//     ret = pose_to_image_coordinates(map, {20, 60, 0});
-//     std::tie(y, x) = ret;
-//     ASSERT_DOUBLE_EQ(20, x);
-//     ASSERT_DOUBLE_EQ(39, y);
-// }
+    ret = pose_to_image_coordinates(map, {20, 60, 0});
+    std::tie(y, x) = ret;
+    ASSERT_DOUBLE_EQ(20, x);
+    ASSERT_DOUBLE_EQ(39, y);
+}
 
 int main(int argc, char** argv)
 {

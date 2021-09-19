@@ -85,8 +85,8 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY_INV);
     map.convertTo(map, CV_32S);
 
-    slam::Lidar lidar(0, M_PI, 500, 1, 90);
-    slam::MCL mcl(lidar, 25, {0.001, 0.001, 0.01, 0.01});
+    slam::Lidar lidar(0, 2 * M_PI, 500, 1, 90);
+    slam::MCL mcl(lidar, 25, {0.0005, 0.0005, 0.01, 0.01});
     slam::Pose real_position{400, 400, M_PI};
 
     // This is the image that is displayed every frame
