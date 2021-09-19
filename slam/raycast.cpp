@@ -36,8 +36,10 @@ Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
 
         if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
 
-        if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
-            max_distance_squared)
+        const double diffx = x - pose.x;
+        const double diffy = y - pose.y;
+
+        if (diffx * diffx + diffy * diffy > max_distance_squared)
             return {-1, -1, pose.theta};
 
         if (map.at<double>(i, j) < 0.5)
@@ -84,8 +86,9 @@ Pose raycast<int>(const cv::Mat& map, const Pose& pose, double max_distance,
 
         if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
 
-        if (std::pow(x - pose.x, 2) + std::pow(y - pose.y, 2) >
-            max_distance_squared)
+        const double diffx = x - pose.x;
+        const double diffy = y - pose.y;
+        if (diffx * diffx + diffy * diffy > max_distance_squared)
             return {-1, -1, pose.theta};
 
         if (map.at<int>(i, j)) return {x, y, pose.theta};
@@ -129,12 +132,13 @@ void raycast_mapping(Particle& particle, double z, double z_max,
 
         if (!within_boundaries(particle.map, i, j)) return;
 
-        const double L0 = 0.5;
-        const double Locc = 0.8;
-        const double Lfree = 0.2;
+        constexpr double L0 = 0.5;
+        constexpr double Locc = 0.8;
+        constexpr double Lfree = 0.2;
 
-        const double distance_squared =
-            std::pow(x - particle.pose.x, 2) + std::pow(y - particle.pose.y, 2);
+        const double diffx = x - particle.pose.x;
+        const double diffy = y - particle.pose.y;
+        const double distance_squared = diffx * diffx + diffy * diffy;
 
         if (distance_squared < z_squared)
         {

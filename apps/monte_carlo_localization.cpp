@@ -25,9 +25,6 @@ static const cv::Scalar GREEN(0, 1, 0);
 static const cv::Scalar WHITE(1, 1, 1);
 static const cv::Scalar GREY(0.5, 0.5, 0.5);
 
-constexpr double VEL = 2.5;
-constexpr double ANG = 0.05;
-
 void draw_particle(cv::Mat& img, const slam::Pose& pose, cv::Scalar color,
                    int size, bool filled = false)
 {
@@ -46,6 +43,9 @@ void draw_particle(cv::Mat& img, const slam::Pose& pose, cv::Scalar color,
 
 slam::Odometry getUserInput(int key)
 {
+    constexpr double VEL = 2.5;
+    constexpr double ANG = 0.05;
+
     slam::Odometry odom{0, 0, 0};
     switch (static_cast<Key>(key))
     {
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
         cv::cvtColor(map_image_frame, map_image_frame, cv::COLOR_GRAY2RGB);
         for (const slam::Particle& particle : mcl.particles)
         {
-            draw_particle(map_image_frame, particle.pose, GREEN, 3, true);
+            draw_particle(map_image_frame, particle.pose, GREEN, 5, true);
         }
         cv::imshow("slam", map_image_frame);
 

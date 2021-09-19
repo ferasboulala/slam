@@ -76,9 +76,9 @@ void MCL::update_inner(const std::vector<double>& scans, int start, int n)
         double weight = 0;
         const Pose pose = particle.pose;
         particle.pose.theta -= range / 2;
-        for (int i = 0; i < this->lidar.n_rays; ++i)
+        for (int j = 0; j < this->lidar.n_rays; ++j)
         {
-            double w = measurement_model_beam(scans[i], this->lidar.stddev,
+            double w = measurement_model_beam(scans[j], this->lidar.stddev,
                                               particle, this->lidar.max_dist);
             weight += std::log(w);
             particle.pose.theta += step;
