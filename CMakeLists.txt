@@ -12,13 +12,11 @@ project(slam)
 
 # Packages
 find_package(Threads REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(OpenCV REQUIRED)
 
 # Include directories and src files
 include_directories("${PROJECT_SOURCE_DIR}/slam")
-include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${GTEST_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 file(GLOB PROJECT_SOURCES "${PROJECT_SOURCE_DIR}/slam/*.cpp" "${PROJECT_SOURCE_DIR}/slam/thirdparty/*.cpp")

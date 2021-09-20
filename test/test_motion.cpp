@@ -1,7 +1,6 @@
 #include "motion.h"
 
 #include <gtest/gtest.h>
-#include <Eigen/Dense>
 
 #include <cmath>
 

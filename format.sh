@@ -1,3 +1,5 @@
+set -e
+
 cd slam
 clang-format -i *.cpp *.h
 cd ../test
