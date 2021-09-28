@@ -5,7 +5,7 @@
 
 namespace slam
 {
-Pose sample_motion_model_odometry(const Odometry& odom, const Pose& pose,
+Pose sample_motion_model_odometry(const Odometry &odom, const Pose &pose,
                                   std::array<double, 4> alphas)
 {
     const double rotation_1 =
@@ -29,7 +29,7 @@ Pose sample_motion_model_odometry(const Odometry& odom, const Pose& pose,
     return {x, y, theta};
 }
 
-Pose sample_motion_model_velocity(const Velocity& vel, const Pose& pose,
+Pose sample_motion_model_velocity(const Velocity &vel, const Pose &pose,
                                   double dt, std::array<double, 6> alphas)
 {
     constexpr double EPSILON = 1e-6;

@@ -13,7 +13,7 @@ constexpr int CANVAS_SIZE = 1000;
 
 namespace slam
 {
-MCL::MCL(const Lidar& lidar, int n_particles,
+MCL::MCL(const Lidar &lidar, int n_particles,
          const std::array<double, 4> alphas)
     : lidar(lidar), m_alphas(alphas)
 {
@@ -27,7 +27,7 @@ void MCL::reset_particles()
         cv::Mat(cv::Size(CANVAS_SIZE, CANVAS_SIZE), CV_64F, cv::Scalar(0.5));
     const double uniform_weight = 1.0 / this->particles.size();
     const Pose center{0.5 * CANVAS_SIZE, 0.5 * CANVAS_SIZE, M_PI / 2};
-    for (Particle& particle : this->particles)
+    for (Particle &particle : this->particles)
     {
         particle.weight = uniform_weight;
         particle.pose = center;
@@ -42,7 +42,7 @@ Pose MCL::average_pose() const
     double avg_y = 0;
     double theta_x = 0;
     double theta_y = 0;
-    for (const Particle& particle : this->particles)
+    for (const Particle &particle : this->particles)
     {
         avg_x += particle.pose.x;
         avg_y += particle.pose.y;
@@ -57,22 +57,22 @@ Pose MCL::average_pose() const
     return {avg_x, avg_y, avg_theta};
 }
 
-void MCL::predict(const Odometry& odom)
+void MCL::predict(const Odometry &odom)
 {
-    for (Particle& particle : this->particles)
+    for (Particle &particle : this->particles)
     {
         particle.pose =
             sample_motion_model_odometry(odom, particle.pose, this->m_alphas);
     }
 }
 
-void MCL::update_inner(const std::vector<double>& scans, int start, int n)
+void MCL::update_inner(const std::vector<double> &scans, int start, int n)
 {
     const double range = this->lidar.stop - this->lidar.start;
     const double step = range / lidar.n_rays;
     for (int i = 0; i < n; ++i)
     {
-        Particle& particle = this->particles[i + start];
+        Particle &particle = this->particles[i + start];
         double weight = 0;
         const Pose pose = particle.pose;
         particle.pose.theta -= range / 2;
@@ -88,7 +88,7 @@ void MCL::update_inner(const std::vector<double>& scans, int start, int n)
     }
 }
 
-void MCL::update(const std::vector<double>& scans)
+void MCL::update(const std::vector<double> &scans)
 {
     std::vector<std::thread> threads(std::thread::hardware_concurrency());
     const int number_particles_per_thread =
@@ -103,7 +103,7 @@ void MCL::update(const std::vector<double>& scans)
         threads[i] = std::thread(&MCL::update_inner, this, scans, start, n);
     }
 
-    for (std::thread& thread : threads)
+    for (std::thread &thread : threads)
     {
         thread.join();
     }
@@ -115,7 +115,7 @@ std::vector<Particle> MCL::probabilistic_fitness_selection(int n)
 {
     // O(nlog m) where m = particles.size()
     double sum = 0;
-    for (Particle& particle : this->particles)
+    for (Particle &particle : this->particles)
     {
         sum += particle.weight;
     }
@@ -172,7 +172,7 @@ void MCL::resample_particles()
         probabilistic_fitness_selection(this->particles.size());
     std::swap(new_particles, this->particles);
     std::sort(this->particles.begin(), this->particles.end(),
-              [](const Particle& lhs, const Particle& rhs) {
+              [](const Particle &lhs, const Particle &rhs) {
                   return lhs.weight > rhs.weight;
               });
 }

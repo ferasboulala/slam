@@ -3,7 +3,7 @@
 namespace slam
 {
 template <>
-Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
+Pose raycast<double>(const cv::Mat &map, const Pose &pose, double max_distance,
                      double step_size)
 {
     const double dx = step_size * std::cos(pose.theta);
@@ -53,7 +53,7 @@ Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
 }
 
 template <>
-Pose raycast<int>(const cv::Mat& map, const Pose& pose, double max_distance,
+Pose raycast<int>(const cv::Mat &map, const Pose &pose, double max_distance,
                   double step_size)
 {
     const double dx = step_size * std::cos(pose.theta);
@@ -98,7 +98,7 @@ Pose raycast<int>(const cv::Mat& map, const Pose& pose, double max_distance,
     }
 }
 
-void raycast_mapping(Particle& particle, double z, double z_max,
+void raycast_mapping(Particle &particle, double z, double z_max,
                      double step_size)
 {
     const double dx = step_size * std::cos(particle.pose.theta);
@@ -133,8 +133,8 @@ void raycast_mapping(Particle& particle, double z, double z_max,
         if (!within_boundaries(particle.map, i, j)) return;
 
         constexpr double L0 = 0.5;
-        constexpr double Locc = 0.2;
-        constexpr double Lfree = 0.8;
+        constexpr double Locc = 0.3;
+        constexpr double Lfree = 0.7;
 
         const double diffx = x - particle.pose.x;
         const double diffy = y - particle.pose.y;
@@ -159,7 +159,7 @@ void raycast_mapping(Particle& particle, double z, double z_max,
 }
 
 double measurement_model_beam(double distance, double stddev,
-                              Particle& particle, double max_distance,
+                              Particle &particle, double max_distance,
                               double step_size)
 {
     const Pose hit = raycast<double>(particle.map, particle.pose, max_distance);

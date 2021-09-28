@@ -16,7 +16,7 @@ Lidar::Lidar(double start, double stop, double max_dist, double stddev,
 {
 }
 
-std::vector<Pose> Lidar::scan(const cv::Mat& map, const Pose& pose) const
+std::vector<Pose> Lidar::scan(const cv::Mat &map, const Pose &pose) const
 {
     const double range = stop - start;
     const double step = range / n_rays;

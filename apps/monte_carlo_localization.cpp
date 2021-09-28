@@ -1,3 +1,4 @@
+#include "colors.h"
 #include "mapping/lidar.h"
 #include "mapping/mcl.h"
 #include "mapping/motion.h"
@@ -18,14 +19,7 @@ enum class Key : int
     Q = 113
 };
 
-static const cv::Scalar CYAN(1, 1, 0);
-static const cv::Scalar BLUE(1, 0, 0);
-static const cv::Scalar RED(0, 0, 1);
-static const cv::Scalar GREEN(0, 1, 0);
-static const cv::Scalar WHITE(1, 1, 1);
-static const cv::Scalar GREY(0.5, 0.5, 0.5);
-
-void draw_particle(cv::Mat& img, const slam::Pose& pose, cv::Scalar color,
+void draw_particle(cv::Mat &img, const slam::Pose &pose, cv::Scalar color,
                    int size, bool filled = false)
 {
     const auto coord = slam::pose_to_image_coordinates(img, pose);
@@ -72,7 +66,7 @@ slam::Odometry getUserInput(int key)
     return odom;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     if (argc != 2)
     {
@@ -99,7 +93,7 @@ int main(int argc, char** argv)
         map_image_frame = mcl.particles.front().map.clone();
         map_image_frame.convertTo(map_image_frame, CV_32FC3);
         cv::cvtColor(map_image_frame, map_image_frame, cv::COLOR_GRAY2RGB);
-        for (const slam::Particle& particle : mcl.particles)
+        for (const slam::Particle &particle : mcl.particles)
         {
             draw_particle(map_image_frame, particle.pose, GREEN, 5, true);
         }
@@ -118,7 +112,7 @@ int main(int argc, char** argv)
             const std::vector<slam::Pose> hits = lidar.scan(map, real_position);
             std::vector<double> distances;
             distances.reserve(hits.size());
-            for (const slam::Pose& hit : hits)
+            for (const slam::Pose &hit : hits)
             {
                 double dist;
                 if (hit.x != -1)

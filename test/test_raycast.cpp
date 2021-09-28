@@ -18,7 +18,7 @@ TEST(TestRaycast, TestRaycastExceedMaxDistance)
 TEST(TestRaycast, TestRaycastHit)
 {
     int data[] = {1, 1, 1, 0, 0, 0, 0, 0, 0};
-    cv::Mat map(cv::Size(3, 3), CV_32S, reinterpret_cast<void*>(data));
+    cv::Mat map(cv::Size(3, 3), CV_32S, reinterpret_cast<void *>(data));
     const Pose result = raycast<int>(map, {1, 1, M_PI / 2}, 3);
     const auto coord = pose_to_image_coordinates(map, {result.x, result.y, 0});
     int i, j;
@@ -27,7 +27,7 @@ TEST(TestRaycast, TestRaycastHit)
     ASSERT_EQ(1, j);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

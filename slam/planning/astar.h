@@ -1,38 +1,34 @@
+#include "colors.h"
 #include "common.h"
+#include "planner.h"
 #include "thirdparty/log.h"
 
 #include <algorithm>
 #include <cmath>
 #include <functional>
 #include <limits>
-#include <vector>
 
 #include <opencv2/opencv.hpp>
 
 namespace slam
 {
-namespace a_star
-{
 static constexpr unsigned MAX_QUEUE_SIZE =
     1e9 / sizeof(Coordinate);  // 1 gigabyte
 
-template <typename T>
-class AStar
+class AStar : public Planner
 {
 public:
     AStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B)
-        : m_A(A),
-          m_B(B),
-          m_map(map),
+        : Planner(map, A, B),
           m_distances(map.size(), CV_64F,
                       cv::Scalar(std::numeric_limits<double>::max()))
     {
-        m_heuristic = [&](const Coordinate &X) {
+        m_heuristic = [this](const Coordinate &X) {
             return manhattan_distance(X, m_B);
         };
 
-        m_comp = [&](const std::tuple<Coordinate, double> &X,
-                     const std::tuple<Coordinate, double> &Y) {
+        m_comp = [this](const std::tuple<Coordinate, double> &X,
+                        const std::tuple<Coordinate, double> &Y) {
             return std::get<1>(X) + m_heuristic(std::get<0>(X)) >
                    std::get<1>(Y) + m_heuristic(std::get<0>(Y));
         };
@@ -68,7 +64,7 @@ public:
 
             if (!within_boundaries(m_map, X)) continue;
 
-            if (!m_map.at<T>(X.i, X.j)) continue;
+            if (m_map.at<double>(X.i, X.j) < 0.5) continue;
 
             if (X == m_B)
             {
@@ -83,7 +79,7 @@ public:
             for (const Coordinate &coord : adjacency_8(X))
             {
                 if (canvas && within_boundaries(m_map, coord) &&
-                    m_map.at<T>(coord.i, coord.j))
+                    m_map.at<double>(coord.i, coord.j) > 0.5)
                 {
                     cv::Vec3f &color = canvas->at<cv::Vec3f>(coord.i, coord.j);
                     color[0] = GREY[0];
@@ -118,7 +114,7 @@ public:
         return true;
     }
 
-    std::vector<Coordinate> recover_path() const
+    std::vector<Coordinate> recover_path()
     {
         if (!m_success) return {};
 
@@ -150,10 +146,6 @@ private:
     bool m_success = false;
     bool m_used_up = false;
 
-    Coordinate m_A;
-    Coordinate m_B;
-    const cv::Mat &m_map;
-
     cv::Mat m_distances;
     std::vector<std::tuple<Coordinate, double>> m_q;
 
@@ -162,7 +154,5 @@ private:
                        const std::tuple<Coordinate, double> &Y)>
         m_comp;
 };
-
-}  // namespace a_star
 
 }  // namespace slam
