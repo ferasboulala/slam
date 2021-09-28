@@ -1,4 +1,4 @@
-#include "motion.h"
+#include "mapping/motion.h"
 
 #include <gtest/gtest.h>
 

@@ -1,5 +1,5 @@
-#include "raycast.h"
-#include "util.h"
+#include "mapping/raycast.h"
+#include "mapping/util.h"
 
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
@@ -17,7 +17,7 @@ TEST(TestRaycast, TestRaycastExceedMaxDistance)
 
 TEST(TestRaycast, TestRaycastHit)
 {
-    int data[] = { 1, 1, 1, 0, 0, 0, 0, 0, 0 };
+    int data[] = {1, 1, 1, 0, 0, 0, 0, 0, 0};
     cv::Mat map(cv::Size(3, 3), CV_32S, reinterpret_cast<void*>(data));
     const Pose result = raycast<int>(map, {1, 1, M_PI / 2}, 3);
     const auto coord = pose_to_image_coordinates(map, {result.x, result.y, 0});

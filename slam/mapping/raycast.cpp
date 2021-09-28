@@ -42,7 +42,7 @@ Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance,
         if (diffx * diffx + diffy * diffy >= max_distance_squared)
             return {-1, -1, pose.theta};
 
-        if (map.at<double>(i, j) < 0.5) // probability that it is free
+        if (map.at<double>(i, j) < 0.5)  // probability that it is free
         {
             return {x, y, pose.theta};
         }

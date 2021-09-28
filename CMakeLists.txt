@@ -19,7 +19,12 @@ find_package(OpenCV REQUIRED)
 include_directories("${PROJECT_SOURCE_DIR}/slam")
 include_directories(${GTEST_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
-file(GLOB PROJECT_SOURCES "${PROJECT_SOURCE_DIR}/slam/*.cpp" "${PROJECT_SOURCE_DIR}/slam/thirdparty/*.cpp")
+file(GLOB PROJECT_SOURCES
+    "${PROJECT_SOURCE_DIR}/slam/*.cpp"
+    "${PROJECT_SOURCE_DIR}/slam/mapping/*.cpp"
+    "${PROJECT_SOURCE_DIR}/slam/planning/*.cpp"
+    "${PROJECT_SOURCE_DIR}/slam/thirdparty/*.cpp"
+)
 
 
 # Tests
@@ -40,5 +45,5 @@ macro(app progname source)
     target_link_libraries(${progname} ${GTEST_LIBRARIES} ${OpenCV_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -pthread)
 endmacro()
 
-app("motion_model" "apps/motion_model.cpp")
 app("monte_carlo_localization" "apps/monte_carlo_localization.cpp")
+app("plan" "apps/plan.cpp")
