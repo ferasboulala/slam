@@ -7,9 +7,9 @@
 
 static cv::Mat map;
 static cv::Mat color_map;
-static ploy::Coordinate A{-1, -1};
-static ploy::Coordinate B{-1, -1};
-static std::vector<ploy::Coordinate> path;
+static slam::Coordinate A{-1, -1};
+static slam::Coordinate B{-1, -1};
+static std::vector<slam::Coordinate> path;
 
 static constexpr int POINT_SIZE = 10;
 
@@ -21,7 +21,7 @@ void mouse_callback(int event, int x, int y, int, void *)
     switch (event)
     {
         case cv::EVENT_LBUTTONDOWN:
-            A = ploy::Coordinate{y, x};
+            A = slam::Coordinate{y, x};
             changed = true;
             cv::cvtColor(map, color_map, cv::COLOR_GRAY2RGB);
             cv::circle(color_map, {x, y}, POINT_SIZE, RED, cv::FILLED);
@@ -30,7 +30,7 @@ void mouse_callback(int event, int x, int y, int, void *)
             break;
         case cv::EVENT_RBUTTONDOWN:
         {
-            B = ploy::Coordinate{y, x};
+            B = slam::Coordinate{y, x};
             changed = true;
             cv::cvtColor(map, color_map, cv::COLOR_GRAY2RGB);
             if (A.i != -1)
@@ -45,7 +45,7 @@ void mouse_callback(int event, int x, int y, int, void *)
     if (changed && A.i != -1 && B.i != -1)
     {
         log_info("computing path for %d %d -> %d %d", A.i, A.j, B.i, B.j);
-        auto finder = ploy::a_star::AStar<float>(map, A, B);
+        auto finder = slam::a_star::AStar<float>(map, A, B);
 #ifdef DRAW
         cv::Mat *canvas = &color_map;
 #else
@@ -60,7 +60,7 @@ void mouse_callback(int event, int x, int y, int, void *)
 #endif
         }
 
-        for (const ploy::Coordinate &coord : finder.recover_path())
+        for (const slam::Coordinate &coord : finder.recover_path())
         {
             cv::circle(color_map, {coord.j, coord.i}, 1, GREEN, cv::FILLED);
         }

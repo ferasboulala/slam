@@ -1,4 +1,4 @@
-#include "ploy.h"
+#include "common.h"
 #include "thirdparty/log.h"
 
 #include <algorithm>
@@ -9,7 +9,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace ploy
+namespace slam
 {
 namespace a_star
 {
@@ -165,4 +165,4 @@ private:
 
 }  // namespace a_star
 
-}  // namespace ploy
+}  // namespace slam
