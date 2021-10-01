@@ -4,6 +4,7 @@
 #include "util.h"
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cmath>
 #include <random>
@@ -90,6 +91,9 @@ void MCL::update_inner(const std::vector<double> &scans, int start, int n)
 
 void MCL::update(const std::vector<double> &scans)
 {
+    assert(scans.size() == this->lidar.n_rays &&
+           "Number of reported scans do not match lidar number of rays");
+
     std::vector<std::thread> threads(std::thread::hardware_concurrency());
     const int number_particles_per_thread =
         this->particles.size() / threads.size();

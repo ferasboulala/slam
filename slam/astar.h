@@ -1,6 +1,5 @@
 #include "colors.h"
 #include "common.h"
-#include "planner.h"
 #include "thirdparty/log.h"
 
 #include <algorithm>
@@ -15,11 +14,17 @@ namespace slam
 static constexpr unsigned MAX_QUEUE_SIZE =
     1e9 / sizeof(Coordinate);  // 1 gigabyte
 
-class AStar : public Planner
+class AStar
 {
 public:
+    /**
+     * Map should be in the CV_64F format where each value is the probability
+     * that the cell is free.
+     **/
     AStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B)
-        : Planner(map, A, B),
+        : m_A(A),
+          m_B(B),
+          m_map(map),
           m_distances(map.size(), CV_64F,
                       cv::Scalar(std::numeric_limits<double>::max()))
     {
@@ -39,6 +44,10 @@ public:
 
     ~AStar() = default;
 
+    /**
+     * Optional canvas. If nullptr is passed in, nothing will be drawn.
+     * This function should be called until it returns false.
+     **/
     bool pathfind(cv::Mat *canvas)
     {
         if (m_used_up)
@@ -145,6 +154,10 @@ public:
 private:
     bool m_success = false;
     bool m_used_up = false;
+
+    Coordinate m_A;
+    Coordinate m_B;
+    const cv::Mat &m_map;
 
     cv::Mat m_distances;
     std::vector<std::tuple<Coordinate, double>> m_q;

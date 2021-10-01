@@ -1,5 +1,5 @@
+#include "astar.h"
 #include "colors.h"
-#include "planning/astar.h"
 #include "thirdparty/log.h"
 
 #include <string>

@@ -1,5 +1,5 @@
-#include "mapping/raycast.h"
-#include "mapping/util.h"
+#include "raycast.h"
+#include "util.h"
 
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>

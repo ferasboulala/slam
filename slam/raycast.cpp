@@ -1,5 +1,7 @@
 #include "raycast.h"
 
+#include <cassert>
+
 namespace slam
 {
 template <>
@@ -101,6 +103,8 @@ Pose raycast<int>(const cv::Mat &map, const Pose &pose, double max_distance,
 void raycast_mapping(Particle &particle, double z, double z_max,
                      double step_size)
 {
+    assert(z <= z_max);
+
     const double dx = step_size * std::cos(particle.pose.theta);
     const double dy = step_size * std::sin(particle.pose.theta);
 
