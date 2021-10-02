@@ -22,7 +22,7 @@ struct Coordinate
     }
 };
 
-std::array<Coordinate, 8> adjacency_8(const Coordinate &X)
+inline std::array<Coordinate, 8> adjacency_8(const Coordinate &X)
 {
     const std::array<Coordinate, 8> neighbourhood = {
         Coordinate{X.i + 1, X.j + 1}, Coordinate{X.i + 1, X.j - 1},
@@ -33,7 +33,7 @@ std::array<Coordinate, 8> adjacency_8(const Coordinate &X)
     return neighbourhood;
 }
 
-std::array<Coordinate, 4> adjacency_4(const Coordinate &X)
+inline std::array<Coordinate, 4> adjacency_4(const Coordinate &X)
 {
     const std::array<Coordinate, 4> neighbourhood = {
         Coordinate{X.i + 1, X.j}, Coordinate{X.i, X.j + 1},
