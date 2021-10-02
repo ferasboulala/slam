@@ -56,4 +56,17 @@ double normalize_angle(double angle)
     return angle;
 }
 
+Coordinate random_point(const cv::Mat &map)
+{
+    static thread_local std::default_random_engine generator;
+    generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<std::mt19937::result_type> distribution_i(
+        0, map.rows);
+    std::uniform_int_distribution<std::mt19937::result_type> distribution_j(
+        0, map.cols);
+
+    return {static_cast<int>(distribution_i(generator)),
+            static_cast<int>(distribution_j(generator))};
+}
+
 }  // namespace slam

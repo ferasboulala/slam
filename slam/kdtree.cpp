@@ -1,7 +1,7 @@
 #include "kdtree.h"
 
 #include "colors.h"
-#include "common.h"
+#include "util.h"
 
 #include <cassert>
 #include <vector>
@@ -9,14 +9,15 @@
 namespace slam
 {
 KDTree::KDTree() : m_root(nullptr) {}
-KDTree::KDTree(const std::vector<Coordinate>& points) : KDTree()
+KDTree::KDTree(const std::vector<std::tuple<Coordinate, void*>>& points)
+    : KDTree()
 {
     balance(points);
 }
 
 KDTree::~KDTree() { free(m_root); }
-static void list_points_helper(KDTree::Node* root,
-                               std::vector<Coordinate>& points)
+static void list_points_helper(
+    KDTree::Node* root, std::vector<std::tuple<Coordinate, void*>>& points)
 {
     if (root == nullptr)
     {
@@ -24,13 +25,13 @@ static void list_points_helper(KDTree::Node* root,
     }
 
     list_points_helper(root->left, points);
-    points.push_back(root->point);
+    points.push_back(std::tuple<Coordinate, void*>(root->point, root->data));
     list_points_helper(root->right, points);
 }
 
-std::vector<Coordinate> KDTree::list_points() const
+std::vector<std::tuple<Coordinate, void*>> KDTree::list_points() const
 {
-    std::vector<Coordinate> points;
+    std::vector<std::tuple<Coordinate, void*>> points;
     list_points_helper(m_root, points);
 
     return points;
@@ -38,12 +39,12 @@ std::vector<Coordinate> KDTree::list_points() const
 
 void KDTree::balance()
 {
-    const std::vector<Coordinate> points = list_points();
+    const std::vector<std::tuple<Coordinate, void*>> points = list_points();
     free(m_root);
     balance(points);
 }
 
-static void add_helper(KDTree::Node* root, const Coordinate& point)
+static void add_helper(KDTree::Node* root, const Coordinate& point, void* data)
 {
     assert(root != nullptr);
     if (root->compare_i)
@@ -52,22 +53,24 @@ static void add_helper(KDTree::Node* root, const Coordinate& point)
         {
             if (root->left == nullptr)
             {
-                root->left = new KDTree::Node{point, nullptr, nullptr, false};
+                root->left =
+                    new KDTree::Node{point, nullptr, nullptr, false, data};
             }
             else
             {
-                add_helper(root->left, point);
+                add_helper(root->left, point, data);
             }
         }
         else
         {
             if (root->right == nullptr)
             {
-                root->right = new KDTree::Node{point, nullptr, nullptr, false};
+                root->right =
+                    new KDTree::Node{point, nullptr, nullptr, false, data};
             }
             else
             {
-                add_helper(root->right, point);
+                add_helper(root->right, point, data);
             }
         }
     }
@@ -77,36 +80,38 @@ static void add_helper(KDTree::Node* root, const Coordinate& point)
         {
             if (root->left == nullptr)
             {
-                root->left = new KDTree::Node{point, nullptr, nullptr, true};
+                root->left =
+                    new KDTree::Node{point, nullptr, nullptr, true, data};
             }
             else
             {
-                add_helper(root->left, point);
+                add_helper(root->left, point, data);
             }
         }
         else
         {
             if (root->right == nullptr)
             {
-                root->right = new KDTree::Node{point, nullptr, nullptr, true};
+                root->right =
+                    new KDTree::Node{point, nullptr, nullptr, true, data};
             }
             else
             {
-                add_helper(root->right, point);
+                add_helper(root->right, point, data);
             }
         }
     }
 }
 
-void KDTree::add(const Coordinate& point)
+void KDTree::add(const Coordinate& point, void* data)
 {
     if (m_root == nullptr)
     {
-        m_root = new Node{point, nullptr, nullptr, true};
+        m_root = new Node{point, nullptr, nullptr, true, data};
         return;
     }
 
-    add_helper(m_root, point);
+    add_helper(m_root, point, data);
 }
 
 static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
@@ -171,25 +176,26 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
     }
 }
 
-Coordinate KDTree::nearest_neighbor(const Coordinate& point) const
+std::tuple<Coordinate, void*> KDTree::nearest_neighbor(
+    const Coordinate& point) const
 {
     if (m_root == nullptr)
     {
-        return point;
+        return std::tuple<Coordinate, void*>(point, nullptr);
     }
 
     Node* best = nullptr;
     nearest_neighbor_helper(point, m_root, &best);
 
-    return best->point;
+    return std::tuple<Coordinate, void*>(best->point, best->data);
 }
 
-void KDTree::balance(const std::vector<Coordinate>& points)
+void KDTree::balance(const std::vector<std::tuple<Coordinate, void*>>& points)
 {
-    // Implement this
-    for (const Coordinate& point : points)
+    // FIXME : Implement this with medians
+    for (const auto& point : points)
     {
-        add(point);
+        add(std::get<0>(point), std::get<1>(point));
     }
 }
 
@@ -203,6 +209,7 @@ void KDTree::free(Node* root)
     delete root;
 }
 
+// TODO : Use 0-1 colors
 static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
                         int stop_i, int start_j, int stop_j)
 {
@@ -211,7 +218,7 @@ static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
     if (root->compare_i)
     {
         cv::line(canvas, {start_j, root->point.i}, {stop_j, root->point.i},
-                 GREY * 255, 2);
+                 GREEN * 255, 2);
         draw_helper(canvas, root->left, start_i, root->point.i, start_j,
                     stop_j);
         draw_helper(canvas, root->right, root->point.i, stop_i, start_j,
@@ -220,7 +227,7 @@ static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
     else
     {
         cv::line(canvas, {root->point.j, start_i}, {root->point.j, stop_i},
-                 GREY * 255, 2);
+                 GREEN * 255, 2);
         draw_helper(canvas, root->left, start_i, stop_i, start_j,
                     root->point.j);
         draw_helper(canvas, root->right, start_i, stop_i, root->point.j,

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "common.h"
+#include "util.h"
 
+#include <tuple>
 #include <vector>
 
 namespace slam
@@ -15,25 +16,27 @@ public:
         Node* left;
         Node* right;
         bool compare_i;
+        void* data;
     };
 
     KDTree();
-    KDTree(const std::vector<Coordinate>& points);
+    KDTree(const std::vector<std::tuple<Coordinate, void*>>& points);
 
     ~KDTree();
 
-    std::vector<Coordinate> list_points() const;
+    std::vector<std::tuple<Coordinate, void*>> list_points() const;
 
     void balance();
 
-    void add(const Coordinate& point);
+    void add(const Coordinate& point, void* data = nullptr);
 
-    Coordinate nearest_neighbor(const Coordinate& point) const;
+    std::tuple<Coordinate, void*> nearest_neighbor(
+        const Coordinate& point) const;
 
     void draw(cv::Mat& canvas) const;
 
 private:
-    void balance(const std::vector<Coordinate>& points);
+    void balance(const std::vector<std::tuple<Coordinate, void*>>& points);
 
     void free(Node* root);
 

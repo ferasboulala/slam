@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include "util.h"
 
 #include <functional>
 
@@ -28,8 +28,8 @@ public:
     std::vector<Coordinate> recover_path();
 
 private:
-    bool m_success = false;
-    bool m_used_up = false;
+    bool m_success;
+    bool m_used_up;
 
     Coordinate m_A;
     Coordinate m_B;

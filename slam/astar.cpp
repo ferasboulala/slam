@@ -15,7 +15,9 @@ static constexpr unsigned MAX_QUEUE_SIZE =
     1e9 / sizeof(Coordinate);  // 1 gigabyte
 
 AStar::AStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B)
-    : m_A(A),
+    : m_success(false),
+      m_used_up(false),
+      m_A(A),
       m_B(B),
       m_map(map),
       m_distances(map.size(), CV_64F,

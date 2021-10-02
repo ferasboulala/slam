@@ -1,14 +1,15 @@
 #include "colors.h"
-#include "common.h"
 #include "kdtree.h"
 #include "thirdparty/log.h"
+#include "util.h"
 
 #include <opencv2/opencv.hpp>
 
 #include <limits>
 #include <random>
 
-#define KDTREE
+#define KDTREE  // Comment to use linear search
+#define DRAW    // Comment to get rid of boundaries
 
 static slam::KDTree tree;
 static cv::Mat map;
@@ -19,9 +20,11 @@ void mouse_callback(int event, int x, int y, int, void *)
     if (event != cv::EVENT_LBUTTONDOWN) return;
     log_info("Querying for %d %d", y, x);
     map_image_frame = map.clone();
+#ifdef DRAW
     tree.draw(map_image_frame);
+#endif
 #ifdef KDTREE
-    const slam::Coordinate nn = tree.nearest_neighbor({y, x});
+    const slam::Coordinate nn = std::get<0>(tree.nearest_neighbor({y, x}));
 #else
     slam::Coordinate nn;
     double dist = std::numeric_limits<double>::max();
@@ -35,7 +38,7 @@ void mouse_callback(int event, int x, int y, int, void *)
     }
 #endif
     log_info("Nearest point is %d %d", nn.i, nn.j);
-    cv::line(map_image_frame, {nn.j, nn.i}, {x, y}, GREEN * 255, 3);
+    cv::line(map_image_frame, {nn.j, nn.i}, {x, y}, BLUE * 255, 3);
     cv::imshow("kdt", map_image_frame);
 }
 
@@ -62,7 +65,7 @@ int main(int argc, char **argv)
     {
         const int i = distribution_i(generator);
         const int j = distribution_j(generator);
-        tree.add({i, j});
+        tree.add({i, j}, nullptr);
         cv::circle(map, {j, i}, 4, RED * 255, cv::FILLED);
     }
 
@@ -70,7 +73,9 @@ int main(int argc, char **argv)
     cv::setMouseCallback("kdt", mouse_callback);
 
     map_image_frame = map.clone();
+#ifdef DRAW
     tree.draw(map_image_frame);
+#endif
     cv::imshow("kdt", map_image_frame);
     while (cv::waitKey(33) != 113)
     {
