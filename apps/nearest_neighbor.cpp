@@ -18,6 +18,8 @@ void mouse_callback(int event, int x, int y, int, void *)
 {
     if (event != cv::EVENT_LBUTTONDOWN) return;
     log_info("Querying for %d %d", y, x);
+    map_image_frame = map.clone();
+    tree.draw(map_image_frame);
 #ifdef KDTREE
     const slam::Coordinate nn = tree.nearest_neighbor({y, x});
 #else
@@ -33,7 +35,6 @@ void mouse_callback(int event, int x, int y, int, void *)
     }
 #endif
     log_info("Nearest point is %d %d", nn.i, nn.j);
-    map_image_frame = map.clone();
     cv::line(map_image_frame, {nn.j, nn.i}, {x, y}, GREEN * 255, 3);
     cv::imshow("kdt", map_image_frame);
 }
@@ -62,14 +63,15 @@ int main(int argc, char **argv)
         const int i = distribution_i(generator);
         const int j = distribution_j(generator);
         tree.add({i, j});
-        cv::circle(map, {j, i}, 3, RED * 128, cv::FILLED);
+        cv::circle(map, {j, i}, 4, RED * 255, cv::FILLED);
     }
 
     cv::namedWindow("kdt");
     cv::setMouseCallback("kdt", mouse_callback);
 
-    cv::imshow("kdt", map);
     map_image_frame = map.clone();
+    tree.draw(map_image_frame);
+    cv::imshow("kdt", map_image_frame);
     while (cv::waitKey(33) != 113)
     {
     }

@@ -8,7 +8,7 @@ namespace slam
 {
 class KDTree
 {
-private:
+public:
     struct Node
     {
         Coordinate point;
@@ -17,11 +17,11 @@ private:
         bool compare_i;
     };
 
-public:
     KDTree();
     KDTree(const std::vector<Coordinate>& points);
 
     ~KDTree();
+
     std::vector<Coordinate> list_points() const;
 
     void balance();
@@ -30,17 +30,12 @@ public:
 
     Coordinate nearest_neighbor(const Coordinate& point) const;
 
-private:
-    void list_points_helper(Node* root, std::vector<Coordinate>& points) const;
+    void draw(cv::Mat& canvas) const;
 
+private:
     void balance(const std::vector<Coordinate>& points);
 
-    void nearest_neighbor_helper(const Coordinate& point, Node* root,
-                                 Node** best) const;
-
     void free(Node* root);
-
-    void add_helper(Node* root, const Coordinate& point);
 
     Node* m_root;
 };
