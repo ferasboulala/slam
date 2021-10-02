@@ -47,3 +47,4 @@ endmacro()
 
 app("monte_carlo_localization" "apps/monte_carlo_localization.cpp")
 app("plan" "apps/plan.cpp")
+app("nearest_neighbor" "apps/nearest_neighbor.cpp")

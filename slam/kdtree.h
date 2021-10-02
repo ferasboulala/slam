@@ -3,14 +3,44 @@
 #include "common.h"
 
 #include <cassert>
+#include <vector>
 
 namespace slam
 {
 class KDTree
 {
+private:
+    struct Node
+    {
+        Coordinate point;
+        Node* left;
+        Node* right;
+        bool compare_i;
+    };
+
 public:
-    KDTree() : m_root(nullptr), m_branching_factor() {}
+    KDTree() : m_root(nullptr) {}
+    KDTree(const std::vector<Coordinate>& points) : KDTree()
+    {
+        balance(points);
+    }
+
     ~KDTree() { free(m_root); }
+    std::vector<Coordinate> list_points() const
+    {
+        std::vector<Coordinate> points;
+        list_points_helper(m_root, points);
+
+        return points;
+    }
+
+    void balance()
+    {
+        const std::vector<Coordinate> points = list_points();
+        free(m_root);
+        balance(points);
+    }
+
     void add(const Coordinate& point)
     {
         if (m_root == nullptr)
@@ -19,7 +49,7 @@ public:
             return;
         }
 
-        add_helper(root, point);
+        add_helper(m_root, point);
     }
 
     Coordinate nearest_neighbor(const Coordinate& point) const
@@ -30,13 +60,34 @@ public:
         }
 
         Node* best = nullptr;
-        nearest_neighbor_helper(m_root, point, &best);
+        nearest_neighbor_helper(point, m_root, &best);
 
         return best->point;
     }
 
 private:
-    void nearest_neighbor_helper(const Coordinate& point, const Node* root,
+    void list_points_helper(Node* root, std::vector<Coordinate>& points) const
+    {
+        if (root == nullptr)
+        {
+            return;
+        }
+
+        list_points_helper(root->left, points);
+        points.push_back(root->point);
+        list_points_helper(root->right, points);
+    }
+
+    void balance(const std::vector<Coordinate>& points)
+    {
+        // Implement this
+        for (const Coordinate& point : points)
+        {
+            add(point);
+        }
+    }
+
+    void nearest_neighbor_helper(const Coordinate& point, Node* root,
                                  Node** best) const
     {
         if (root == nullptr)
@@ -44,9 +95,9 @@ private:
             return;
         }
 
-        if (best == nullptr)
+        if (*best == nullptr)
         {
-            best = root;
+            *best = root;
         }
         else if (euclidean_distance(root->point, point) <
                  euclidean_distance((*best)->point, point))
@@ -59,8 +110,8 @@ private:
             if (point.i < root->point.i)
             {
                 nearest_neighbor_helper(point, root->left, best);
-                if (euclidean_distance(root->point, point) >
-                    std::abs(point.i - root.point.i))
+                if (euclidean_distance((*best)->point, point) >
+                    std::abs(point.i - root->point.i))
                 {
                     nearest_neighbor_helper(point, root->right, best);
                 }
@@ -68,8 +119,8 @@ private:
             else
             {
                 nearest_neighbor_helper(point, root->right, best);
-                if (euclidean_distance(root->point, point) >
-                    std::abs(point.i - root.point.i))
+                if (euclidean_distance((*best)->point, point) >
+                    std::abs(point.i - root->point.i))
                 {
                     nearest_neighbor_helper(point, root->left, best);
                 }
@@ -80,8 +131,8 @@ private:
             if (point.j < root->point.j)
             {
                 nearest_neighbor_helper(point, root->left, best);
-                if (euclidean_distance(root->point, point) >
-                    std::abs(point.j - root.point.j))
+                if (euclidean_distance((*best)->point, point) >
+                    std::abs(point.j - root->point.j))
                 {
                     nearest_neighbor_helper(point, root->right, best);
                 }
@@ -89,8 +140,8 @@ private:
             else
             {
                 nearest_neighbor_helper(point, root->right, best);
-                if (euclidean_distance(root->point, point) >
-                    std::abs(point.j - root.point.j))
+                if (euclidean_distance((*best)->point, point) >
+                    std::abs(point.j - root->point.j))
                 {
                     nearest_neighbor_helper(point, root->left, best);
                 }
@@ -138,11 +189,11 @@ private:
         }
         else
         {
-            if (point.j < root->point.i)
+            if (point.j < root->point.j)
             {
                 if (root->left == nullptr)
                 {
-                    root->left == new Node{point, nullptr, nullptr, true};
+                    root->left = new Node{point, nullptr, nullptr, true};
                 }
                 else
                 {
@@ -162,14 +213,6 @@ private:
             }
         }
     }
-
-    struct Node
-    {
-        Coordinate point;
-        Node* left;
-        Node* right;
-        bool compare_i;
-    };
 
     Node* m_root;
 };
