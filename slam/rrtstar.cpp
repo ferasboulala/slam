@@ -1,5 +1,8 @@
 #include "rrtstar.h"
 #include "colors.h"
+#include "raycast.h"
+
+#include <cmath>
 
 namespace slam
 {
@@ -42,14 +45,24 @@ bool RRTStar::pathfind(cv::Mat *canvas)
 
         double dist = euclidean_distance(root->point, new_point);
         Coordinate new_point_to_add = new_point;
-        if (dist > m_radius)
-        {
-            const double di = (new_point.i - root->point.i) / dist;
-            const double dj = (new_point.j - root->point.j) / dist;
-            new_point_to_add =
-                Coordinate{static_cast<int>(root->point.i + di * m_radius),
-                           static_cast<int>(root->point.j + dj * m_radius)};
-        }
+        const double min_dist = std::min(dist, m_radius);
+        const double di = (new_point.i - root->point.i) / dist;
+        const double dj = (new_point.j - root->point.j) / dist;
+        new_point_to_add =
+            Coordinate{static_cast<int>(root->point.i + di * min_dist),
+                       static_cast<int>(root->point.j + dj * min_dist)};
+
+        if (!within_boundaries(m_map, new_point_to_add.i, new_point_to_add.j))
+            continue;
+
+        if (m_map.at<double>(new_point_to_add.i, new_point_to_add.j) < 0.5)
+            continue;
+
+        double x, y;
+        std::tie(x, y) = image_coordinates_to_pose(m_map, new_point_to_add);
+        const double angle = std::atan2(-dj, di);
+        const Pose pose{x, y, angle};
+        if (raycast<double>(m_map, pose, min_dist).x != -1) continue;
 
         Node *new_node = new Node{new_point_to_add, root, {}};
         root->children.push_back(new_node);
@@ -68,9 +81,11 @@ bool RRTStar::pathfind(cv::Mat *canvas)
         if (dist <= m_radius)
         {
             m_last_node = new_node;
+            m_success = true;
             return true;
         }
 
+        m_used_up = true;
         return false;
     }
 }

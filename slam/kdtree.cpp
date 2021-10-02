@@ -209,7 +209,6 @@ void KDTree::free(Node* root)
     delete root;
 }
 
-// TODO : Use 0-1 colors
 static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
                         int stop_i, int start_j, int stop_j)
 {
@@ -218,7 +217,7 @@ static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
     if (root->compare_i)
     {
         cv::line(canvas, {start_j, root->point.i}, {stop_j, root->point.i},
-                 GREEN * 255, 2);
+                 GREEN, 2);
         draw_helper(canvas, root->left, start_i, root->point.i, start_j,
                     stop_j);
         draw_helper(canvas, root->right, root->point.i, stop_i, start_j,
@@ -227,7 +226,7 @@ static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
     else
     {
         cv::line(canvas, {root->point.j, start_i}, {root->point.j, stop_i},
-                 GREEN * 255, 2);
+                 GREEN, 2);
         draw_helper(canvas, root->left, start_i, stop_i, start_j,
                     root->point.j);
         draw_helper(canvas, root->right, start_i, stop_i, root->point.j,

@@ -1,5 +1,6 @@
 #include "astar.h"
 #include "colors.h"
+#include "rrtstar.h"
 #include "thirdparty/log.h"
 
 #include <string>
@@ -16,6 +17,7 @@ static std::vector<slam::Coordinate> path;
 static constexpr int POINT_SIZE = 10;
 
 #define DRAW
+//#define ASTAR
 
 void mouse_callback(int event, int x, int y, int, void *)
 {
@@ -47,7 +49,12 @@ void mouse_callback(int event, int x, int y, int, void *)
     if (changed && A.i != -1 && B.i != -1)
     {
         log_info("computing path for %d %d -> %d %d", A.i, A.j, B.i, B.j);
+#ifdef ASTAR
         auto finder = slam::AStar(map, A, B);
+#else
+        auto finder = slam::RRTStar(map, A, B, 10);
+#endif
+
 #ifdef DRAW
         cv::Mat *canvas = &color_map;
 #else
@@ -62,9 +69,11 @@ void mouse_callback(int event, int x, int y, int, void *)
 #endif
         }
 
+        slam::Coordinate prev = B;
         for (const slam::Coordinate &coord : finder.recover_path())
         {
-            cv::circle(color_map, {coord.j, coord.i}, 1, GREEN, cv::FILLED);
+            cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
+            prev = coord;
         }
         cv::imshow("dilate", color_map);
     }

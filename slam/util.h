@@ -18,19 +18,6 @@ double sample_normal_distribution(double stddev);
 double sample_triangular_distribution(double stddev);
 double normalize_angle(double angle);
 
-inline std::tuple<int, int> pose_to_image_coordinates(const cv::Mat &map,
-                                                      const Pose &pose)
-{
-    return std::tuple<int, int>(map.rows - pose.y - 1, pose.x);
-}
-
-inline bool within_boundaries(const cv::Mat &map, const int i, const int j)
-{
-    return i < map.rows && j < map.cols && i >= 0 && j >= 0;
-}
-
-inline double log_odds(double p) { return std::log(p / (1 - p)); };
-inline double log_odds_inv(double l) { return 1 - (1.0 / (1 + std::exp(l))); }
 struct Coordinate
 {
     int i;
@@ -47,6 +34,25 @@ struct Coordinate
     }
 };
 
+inline std::tuple<int, int> pose_to_image_coordinates(const cv::Mat &map,
+                                                      const Pose &pose)
+{
+    return std::tuple<int, int>(map.rows - pose.y - 1, pose.x);
+}
+
+inline std::tuple<double, double> image_coordinates_to_pose(
+    const cv::Mat &map, const Coordinate &coord)
+{
+    return std::tuple<double, double>(coord.j, map.rows - coord.i);
+}
+
+inline bool within_boundaries(const cv::Mat &map, const int i, const int j)
+{
+    return i < map.rows && j < map.cols && i >= 0 && j >= 0;
+}
+
+inline double log_odds(double p) { return std::log(p / (1 - p)); };
+inline double log_odds_inv(double l) { return 1 - (1.0 / (1 + std::exp(l))); }
 Coordinate random_point(const cv::Mat &map);
 
 inline std::array<Coordinate, 8> adjacency_8(const Coordinate &X)

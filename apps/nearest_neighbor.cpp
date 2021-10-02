@@ -38,7 +38,7 @@ void mouse_callback(int event, int x, int y, int, void *)
     }
 #endif
     log_info("Nearest point is %d %d", nn.i, nn.j);
-    cv::line(map_image_frame, {nn.j, nn.i}, {x, y}, BLUE * 255, 3);
+    cv::line(map_image_frame, {nn.j, nn.i}, {x, y}, BLUE, 3);
     cv::imshow("kdt", map_image_frame);
 }
 
@@ -51,6 +51,8 @@ int main(int argc, char **argv)
     }
 
     map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+    cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
+    map.convertTo(map, CV_32F);
     cv::cvtColor(map, map, cv::COLOR_GRAY2RGB);
     const unsigned N_POINTS = std::stoi(argv[2]);
 
@@ -66,7 +68,7 @@ int main(int argc, char **argv)
         const int i = distribution_i(generator);
         const int j = distribution_j(generator);
         tree.add({i, j}, nullptr);
-        cv::circle(map, {j, i}, 4, RED * 255, cv::FILLED);
+        cv::circle(map, {j, i}, 4, RED, cv::FILLED);
     }
 
     cv::namedWindow("kdt");
