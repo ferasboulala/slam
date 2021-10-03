@@ -19,6 +19,12 @@ static constexpr int POINT_SIZE = 10;
 #define DRAW
 //#define ASTAR
 
+#ifdef ASTAR
+static int EVERY_OTHER = 1000;
+#else
+static int EVERY_OTHER = 1;
+#endif
+
 void mouse_callback(int event, int x, int y, int, void *)
 {
     bool changed = false;
@@ -60,10 +66,11 @@ void mouse_callback(int event, int x, int y, int, void *)
 #else
         cv::Mat *canvas = nullptr;
 #endif
+        unsigned counter = 0;
         while (!finder.pathfind(canvas))
         {
 #ifdef DRAW
-            cv::imshow("dilate", *canvas);
+            if (counter++ % EVERY_OTHER == 0) cv::imshow("plan", *canvas);
             const int key = cv::waitKey(1);
             if (key == 113) exit(0);
 #endif
@@ -75,11 +82,12 @@ void mouse_callback(int event, int x, int y, int, void *)
             cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
             prev = coord;
         }
-        cv::imshow("dilate", color_map);
+        cv::imshow("plan", color_map);
+        log_info("Found path after %u states explored", finder.size());
     }
     else if (changed)
     {
-        cv::imshow("dilate", color_map);
+        cv::imshow("plan", color_map);
     }
 }
 
@@ -100,10 +108,10 @@ int main(int argc, char **argv)
         cv::MORPH_ELLIPSE, cv::Size(kernel_size, kernel_size));
     cv::erode(map, map, kernel);
 
-    cv::namedWindow("dilate");
-    cv::setMouseCallback("dilate", mouse_callback);
+    cv::namedWindow("plan");
+    cv::setMouseCallback("plan", mouse_callback);
 
-    cv::imshow("dilate", map);
+    cv::imshow("plan", map);
     map.convertTo(map_, CV_32F);
     cv::cvtColor(map_, color_map, cv::COLOR_GRAY2RGB);
     while (true)

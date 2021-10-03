@@ -17,6 +17,7 @@ public:
         Coordinate point;
         Node *parent;
         std::vector<Node *> children;
+        unsigned cost;
     };
 
     /**

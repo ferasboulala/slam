@@ -27,6 +27,7 @@ public:
 
     std::vector<Coordinate> recover_path();
 
+    unsigned size() const { return m_size; }
 private:
     bool m_success;
     bool m_used_up;
@@ -42,6 +43,7 @@ private:
     std::function<bool(const std::tuple<Coordinate, double> &X,
                        const std::tuple<Coordinate, double> &Y)>
         m_comp;
+    unsigned m_size;
 };
 
 }  // namespace slam

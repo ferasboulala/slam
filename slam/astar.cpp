@@ -21,7 +21,8 @@ AStar::AStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B)
       m_B(B),
       m_map(map),
       m_distances(map.size(), CV_64F,
-                  cv::Scalar(std::numeric_limits<double>::max()))
+                  cv::Scalar(std::numeric_limits<double>::max())),
+      m_size(0)
 {
     m_heuristic = [this](const Coordinate &X) {
         return manhattan_distance(X, m_B);
@@ -74,20 +75,29 @@ bool AStar::pathfind(cv::Mat *canvas)
             return true;
         }
 
+        if (canvas)
+        {
+            cv::Vec3f &color = canvas->at<cv::Vec3f>(X.i, X.j);
+            color[0] = BLUE[0];
+            color[1] = BLUE[1];
+            color[2] = BLUE[2];
+        }
+
         if (dist >= m_distances.at<double>(X.i, X.j)) continue;
 
         m_distances.at<double>(X.i, X.j) = dist;
 
         for (const Coordinate &coord : adjacency_8(X))
         {
-            if (canvas && within_boundaries(m_map, coord) &&
-                m_map.at<double>(coord.i, coord.j) > 0.5)
-            {
-                cv::Vec3f &color = canvas->at<cv::Vec3f>(coord.i, coord.j);
-                color[0] = GREY[0];
-                color[1] = GREY[1];
-                color[2] = GREY[2];
-            }
+            // if (canvas && within_boundaries(m_map, coord) &&
+            //     m_map.at<double>(coord.i, coord.j) > 0.5)
+            // {
+            //     // review
+            //     cv::Vec3f &color = canvas->at<cv::Vec3f>(coord.i, coord.j);
+            //     color[0] = GREY[0];
+            //     color[1] = GREY[1];
+            //     color[2] = GREY[2];
+            // }
 
             double new_dist = dist;
             if (coord.i != X.i && coord.j != X.j)
@@ -99,13 +109,7 @@ bool AStar::pathfind(cv::Mat *canvas)
             std::push_heap(m_q.begin(), m_q.end(), m_comp);
         }
 
-        if (canvas)
-        {
-            cv::Vec3f &color = canvas->at<cv::Vec3f>(X.i, X.j);
-            color[0] = GREEN[0];
-            color[1] = GREEN[1];
-            color[2] = GREEN[2];
-        }
+        ++m_size;
 
         return false;
     }

@@ -35,10 +35,6 @@ macro(unit_test test_name test_source)
     target_link_libraries(${test_name} -pthread ${GTEST_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -pthread)
 endmacro()
 
-unit_test("test_util" "test/test_util.cpp")
-unit_test("test_raycast" "test/test_raycast.cpp")
-unit_test("test_motion" "test/test_motion.cpp")
-
 # Apps and libraries
 macro(app progname source)
     add_executable(${progname} ${source} ${PROJECT_SOURCES})
