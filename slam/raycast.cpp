@@ -5,8 +5,7 @@
 namespace slam
 {
 template <>
-Pose raycast<double>(const cv::Mat &map, const Pose &pose, double max_distance,
-                     double step_size)
+Pose raycast<double>(const cv::Mat& map, const Pose& pose, double max_distance, double step_size)
 {
     const double dx = step_size * std::cos(pose.theta);
     const double dy = step_size * std::sin(pose.theta);
@@ -41,8 +40,7 @@ Pose raycast<double>(const cv::Mat &map, const Pose &pose, double max_distance,
         const double diffx = x - pose.x;
         const double diffy = y - pose.y;
 
-        if (diffx * diffx + diffy * diffy >= max_distance_squared)
-            return {-1, -1, pose.theta};
+        if (diffx * diffx + diffy * diffy >= max_distance_squared) return {-1, -1, pose.theta};
 
         if (map.at<double>(i, j) < 0.5)  // probability that it is free
         {
@@ -55,8 +53,7 @@ Pose raycast<double>(const cv::Mat &map, const Pose &pose, double max_distance,
 }
 
 template <>
-Pose raycast<int>(const cv::Mat &map, const Pose &pose, double max_distance,
-                  double step_size)
+Pose raycast<int>(const cv::Mat& map, const Pose& pose, double max_distance, double step_size)
 {
     const double dx = step_size * std::cos(pose.theta);
     const double dy = step_size * std::sin(pose.theta);
@@ -90,8 +87,7 @@ Pose raycast<int>(const cv::Mat &map, const Pose &pose, double max_distance,
 
         const double diffx = x - pose.x;
         const double diffy = y - pose.y;
-        if (diffx * diffx + diffy * diffy >= max_distance_squared)
-            return {-1, -1, pose.theta};
+        if (diffx * diffx + diffy * diffy >= max_distance_squared) return {-1, -1, pose.theta};
 
         if (!map.at<int>(i, j)) return {x, y, pose.theta};
 
@@ -100,8 +96,7 @@ Pose raycast<int>(const cv::Mat &map, const Pose &pose, double max_distance,
     }
 }
 
-void raycast_mapping(Particle &particle, double z, double z_max,
-                     double step_size)
+void raycast_mapping(Particle& particle, double z, double z_max, double step_size)
 {
     assert(z <= z_max);
 
@@ -147,13 +142,11 @@ void raycast_mapping(Particle &particle, double z, double z_max,
         if (distance_squared < z_squared)
         {
             particle.map.at<double>(i, j) *= Lfree / L0;
-            particle.map.at<double>(i, j) =
-                std::min(1.0, particle.map.at<double>(i, j));
+            particle.map.at<double>(i, j) = std::min(1.0, particle.map.at<double>(i, j));
         }
         else
         {
-            if (z_squared != z_max_squared)
-                particle.map.at<double>(i, j) *= Locc / L0;
+            if (z_squared != z_max_squared) particle.map.at<double>(i, j) *= Locc / L0;
             break;
         }
 
@@ -162,23 +155,18 @@ void raycast_mapping(Particle &particle, double z, double z_max,
     }
 }
 
-double measurement_model_beam(double distance, double stddev,
-                              Particle &particle, double max_distance,
-                              double step_size)
+double measurement_model_beam(double distance, double stddev, Particle& particle, double max_distance, double step_size)
 {
     const Pose hit = raycast<double>(particle.map, particle.pose, max_distance);
     raycast_mapping(particle, distance, max_distance, step_size);
 
     constexpr double EPSILON = 0.1;
     if (hit.x == -1)  // no hit
-        return pdf_normal_distribution_clamp(stddev, distance - max_distance) +
-               EPSILON;
+        return pdf_normal_distribution_clamp(stddev, distance - max_distance) + EPSILON;
 
-    const double distance_ = std::sqrt(std::pow(hit.x - particle.pose.x, 2) +
-                                       std::pow(hit.y - particle.pose.y, 2));
+    const double distance_ = std::sqrt(std::pow(hit.x - particle.pose.x, 2) + std::pow(hit.y - particle.pose.y, 2));
 
-    return pdf_normal_distribution_clamp(stddev, distance - distance_) +
-           EPSILON;
+    return pdf_normal_distribution_clamp(stddev, distance - distance_) + EPSILON;
 }
 
 }  // namespace slam

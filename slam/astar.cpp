@@ -11,27 +11,21 @@
 
 namespace slam
 {
-static constexpr unsigned MAX_QUEUE_SIZE =
-    1e9 / sizeof(Coordinate);  // 1 gigabyte
+static constexpr unsigned MAX_QUEUE_SIZE = 1e9 / sizeof(Coordinate);  // 1 gigabyte
 
-AStar::AStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B)
+AStar::AStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B)
     : m_success(false),
       m_used_up(false),
       m_A(A),
       m_B(B),
       m_map(map),
-      m_distances(map.size(), CV_64F,
-                  cv::Scalar(std::numeric_limits<double>::max())),
+      m_distances(map.size(), CV_64F, cv::Scalar(std::numeric_limits<double>::max())),
       m_size(0)
 {
-    m_heuristic = [this](const Coordinate &X) {
-        return manhattan_distance(X, m_B);
-    };
+    m_heuristic = [this](const Coordinate& X) { return manhattan_distance(X, m_B); };
 
-    m_comp = [this](const std::tuple<Coordinate, double> &X,
-                    const std::tuple<Coordinate, double> &Y) {
-        return std::get<1>(X) + m_heuristic(std::get<0>(X)) >
-               std::get<1>(Y) + m_heuristic(std::get<0>(Y));
+    m_comp = [this](const std::tuple<Coordinate, double>& X, const std::tuple<Coordinate, double>& Y) {
+        return std::get<1>(X) + m_heuristic(std::get<0>(X)) > std::get<1>(Y) + m_heuristic(std::get<0>(Y));
     };
 
     m_q.push_back(std::tuple<Coordinate, double>{A, 0.0});
@@ -42,7 +36,7 @@ AStar::AStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B)
  * Optional canvas. If nullptr is passed in, nothing will be drawn.
  * This function should be called until it returns false.
  **/
-bool AStar::pathfind(cv::Mat *canvas)
+bool AStar::pathfind(cv::Mat* canvas)
 {
     if (m_used_up)
     {
@@ -77,7 +71,7 @@ bool AStar::pathfind(cv::Mat *canvas)
 
         if (canvas)
         {
-            cv::Vec3f &color = canvas->at<cv::Vec3f>(X.i, X.j);
+            cv::Vec3f& color = canvas->at<cv::Vec3f>(X.i, X.j);
             color[0] = BLUE[0];
             color[1] = BLUE[1];
             color[2] = BLUE[2];
@@ -87,7 +81,7 @@ bool AStar::pathfind(cv::Mat *canvas)
 
         m_distances.at<double>(X.i, X.j) = dist;
 
-        for (const Coordinate &coord : adjacency_8(X))
+        for (const Coordinate& coord : adjacency_8(X))
         {
             // if (canvas && within_boundaries(m_map, coord) &&
             //     m_map.at<double>(coord.i, coord.j) > 0.5)
@@ -131,10 +125,9 @@ std::vector<Coordinate> AStar::recover_path()
         path.push_back(next);
         Coordinate next_;
         double dist = std::numeric_limits<double>::max();
-        for (const Coordinate &coord : adjacency_8(next))
+        for (const Coordinate& coord : adjacency_8(next))
         {
-            if (within_boundaries(m_map, coord) &&
-                m_distances.at<double>(coord.i, coord.j) < dist)
+            if (within_boundaries(m_map, coord) && m_distances.at<double>(coord.i, coord.j) < dist)
             {
                 next_ = coord;
                 dist = m_distances.at<double>(coord.i, coord.j);

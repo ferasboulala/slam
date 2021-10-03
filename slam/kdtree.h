@@ -30,8 +30,7 @@ public:
 
     void add(const Coordinate& point, void* data = nullptr);
 
-    std::tuple<Coordinate, void*> nearest_neighbor(
-        const Coordinate& point) const;
+    std::tuple<Coordinate, void*> nearest_neighbor(const Coordinate& point) const;
 
     void draw(cv::Mat& canvas) const;
 

@@ -9,14 +9,13 @@ namespace slam
 class HybridAStar
 {
 public:
-    HybridAStar(cv::Mat &mat, const Pose &A, const Pose &B, double v,
-                double theta, unsigned theta_res = 10)
+    HybridAStar(cv::Mat& mat, const Pose& A, const Pose& B, double v, double theta, unsigned theta_res = 10)
         : Planner(map, A, B), m_v(v), m_theta(theta)
     {
         m_distances = Cuboid(map.rows, Grid(map.cols, std::vector<double>(theta_res, std::numeric_limits<double>::max()));
     }
 
-    bool pathfind(cv::Mat *canvas) { return false; }
+    bool pathfind(cv::Mat* canvas) { return false; }
     std::vector<Coordinate> recover_path() { return {}; }
 private:
     double m_v;

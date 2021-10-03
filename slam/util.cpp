@@ -10,12 +10,10 @@ namespace slam
 {
 double pdf_normal_distribution(double stddev, double x)
 {
-    return (1.0 / (stddev * std::sqrt(2 * M_PI))) *
-           std::exp(-0.5 * std::pow(x / stddev, 2));
+    return (1.0 / (stddev * std::sqrt(2 * M_PI))) * std::exp(-0.5 * std::pow(x / stddev, 2));
 }
 
-double pdf_normal_distribution_clamp(double stddev, double x,
-                                     double multiple_stddev)
+double pdf_normal_distribution_clamp(double stddev, double x, double multiple_stddev)
 {
     if (std::fabs(x) > multiple_stddev * stddev) return 0;
 
@@ -25,8 +23,7 @@ double pdf_normal_distribution_clamp(double stddev, double x,
 double pdf_triangular_distribution(double stddev, double x)
 {
     const double variance = std::pow(stddev, 2);
-    return std::max(0.0,
-                    1 / std::sqrt(6 * variance) - std::fabs(x) / 6 / variance);
+    return std::max(0.0, 1 / std::sqrt(6 * variance) - std::fabs(x) / 6 / variance);
 }
 
 double sample_normal_distribution(double stddev)
@@ -44,8 +41,7 @@ double sample_triangular_distribution(double stddev)
     generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_real_distribution<double> distribution(-stddev, stddev);
 
-    return std::sqrt(6) / 2 * (distribution(generator)) +
-           distribution(generator);
+    return std::sqrt(6) / 2 * (distribution(generator)) + distribution(generator);
 }
 
 double normalize_angle(double angle)
@@ -56,17 +52,14 @@ double normalize_angle(double angle)
     return angle;
 }
 
-Coordinate random_point(const cv::Mat &map)
+Coordinate random_point(const cv::Mat& map)
 {
     static thread_local std::default_random_engine generator;
     generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<std::mt19937::result_type> distribution_i(
-        0, map.rows);
-    std::uniform_int_distribution<std::mt19937::result_type> distribution_j(
-        0, map.cols);
+    std::uniform_int_distribution<std::mt19937::result_type> distribution_i(0, map.rows);
+    std::uniform_int_distribution<std::mt19937::result_type> distribution_j(0, map.cols);
 
-    return {static_cast<int>(distribution_i(generator)),
-            static_cast<int>(distribution_j(generator))};
+    return {static_cast<int>(distribution_i(generator)), static_cast<int>(distribution_j(generator))};
 }
 
 }  // namespace slam

@@ -9,15 +9,9 @@
 namespace slam
 {
 KDTree::KDTree() : m_root(nullptr) {}
-KDTree::KDTree(const std::vector<std::tuple<Coordinate, void*>>& points)
-    : KDTree()
-{
-    balance(points);
-}
-
+KDTree::KDTree(const std::vector<std::tuple<Coordinate, void*>>& points) : KDTree() { balance(points); }
 KDTree::~KDTree() { free(m_root); }
-static void list_points_helper(
-    KDTree::Node* root, std::vector<std::tuple<Coordinate, void*>>& points)
+static void list_points_helper(KDTree::Node* root, std::vector<std::tuple<Coordinate, void*>>& points)
 {
     if (root == nullptr)
     {
@@ -53,8 +47,7 @@ static void add_helper(KDTree::Node* root, const Coordinate& point, void* data)
         {
             if (root->left == nullptr)
             {
-                root->left =
-                    new KDTree::Node{point, nullptr, nullptr, false, data};
+                root->left = new KDTree::Node{point, nullptr, nullptr, false, data};
             }
             else
             {
@@ -65,8 +58,7 @@ static void add_helper(KDTree::Node* root, const Coordinate& point, void* data)
         {
             if (root->right == nullptr)
             {
-                root->right =
-                    new KDTree::Node{point, nullptr, nullptr, false, data};
+                root->right = new KDTree::Node{point, nullptr, nullptr, false, data};
             }
             else
             {
@@ -80,8 +72,7 @@ static void add_helper(KDTree::Node* root, const Coordinate& point, void* data)
         {
             if (root->left == nullptr)
             {
-                root->left =
-                    new KDTree::Node{point, nullptr, nullptr, true, data};
+                root->left = new KDTree::Node{point, nullptr, nullptr, true, data};
             }
             else
             {
@@ -92,8 +83,7 @@ static void add_helper(KDTree::Node* root, const Coordinate& point, void* data)
         {
             if (root->right == nullptr)
             {
-                root->right =
-                    new KDTree::Node{point, nullptr, nullptr, true, data};
+                root->right = new KDTree::Node{point, nullptr, nullptr, true, data};
             }
             else
             {
@@ -114,8 +104,7 @@ void KDTree::add(const Coordinate& point, void* data)
     add_helper(m_root, point, data);
 }
 
-static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
-                                    KDTree::Node** best)
+static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root, KDTree::Node** best)
 {
     if (root == nullptr)
     {
@@ -126,8 +115,7 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
     {
         *best = root;
     }
-    else if (euclidean_distance(root->point, point) <
-             euclidean_distance((*best)->point, point))
+    else if (euclidean_distance(root->point, point) < euclidean_distance((*best)->point, point))
     {
         *best = root;
     }
@@ -137,8 +125,7 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
         if (point.i < root->point.i)
         {
             nearest_neighbor_helper(point, root->left, best);
-            if (euclidean_distance((*best)->point, point) >
-                std::abs(point.i - root->point.i))
+            if (euclidean_distance((*best)->point, point) > std::abs(point.i - root->point.i))
             {
                 nearest_neighbor_helper(point, root->right, best);
             }
@@ -146,8 +133,7 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
         else
         {
             nearest_neighbor_helper(point, root->right, best);
-            if (euclidean_distance((*best)->point, point) >
-                std::abs(point.i - root->point.i))
+            if (euclidean_distance((*best)->point, point) > std::abs(point.i - root->point.i))
             {
                 nearest_neighbor_helper(point, root->left, best);
             }
@@ -158,8 +144,7 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
         if (point.j < root->point.j)
         {
             nearest_neighbor_helper(point, root->left, best);
-            if (euclidean_distance((*best)->point, point) >
-                std::abs(point.j - root->point.j))
+            if (euclidean_distance((*best)->point, point) > std::abs(point.j - root->point.j))
             {
                 nearest_neighbor_helper(point, root->right, best);
             }
@@ -167,8 +152,7 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
         else
         {
             nearest_neighbor_helper(point, root->right, best);
-            if (euclidean_distance((*best)->point, point) >
-                std::abs(point.j - root->point.j))
+            if (euclidean_distance((*best)->point, point) > std::abs(point.j - root->point.j))
             {
                 nearest_neighbor_helper(point, root->left, best);
             }
@@ -176,8 +160,7 @@ static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root,
     }
 }
 
-std::tuple<Coordinate, void*> KDTree::nearest_neighbor(
-    const Coordinate& point) const
+std::tuple<Coordinate, void*> KDTree::nearest_neighbor(const Coordinate& point) const
 {
     if (m_root == nullptr)
     {
@@ -209,34 +192,23 @@ void KDTree::free(Node* root)
     delete root;
 }
 
-static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i,
-                        int stop_i, int start_j, int stop_j)
+static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i, int stop_i, int start_j, int stop_j)
 {
     if (root == nullptr) return;
 
     if (root->compare_i)
     {
-        cv::line(canvas, {start_j, root->point.i}, {stop_j, root->point.i},
-                 GREEN, 2);
-        draw_helper(canvas, root->left, start_i, root->point.i, start_j,
-                    stop_j);
-        draw_helper(canvas, root->right, root->point.i, stop_i, start_j,
-                    stop_j);
+        cv::line(canvas, {start_j, root->point.i}, {stop_j, root->point.i}, GREEN, 2);
+        draw_helper(canvas, root->left, start_i, root->point.i, start_j, stop_j);
+        draw_helper(canvas, root->right, root->point.i, stop_i, start_j, stop_j);
     }
     else
     {
-        cv::line(canvas, {root->point.j, start_i}, {root->point.j, stop_i},
-                 GREEN, 2);
-        draw_helper(canvas, root->left, start_i, stop_i, start_j,
-                    root->point.j);
-        draw_helper(canvas, root->right, start_i, stop_i, root->point.j,
-                    stop_j);
+        cv::line(canvas, {root->point.j, start_i}, {root->point.j, stop_i}, GREEN, 2);
+        draw_helper(canvas, root->left, start_i, stop_i, start_j, root->point.j);
+        draw_helper(canvas, root->right, start_i, stop_i, root->point.j, stop_j);
     }
 }
 
-void KDTree::draw(cv::Mat& canvas) const
-{
-    draw_helper(canvas, m_root, 0, canvas.rows, 0, canvas.cols);
-}
-
+void KDTree::draw(cv::Mat& canvas) const { draw_helper(canvas, m_root, 0, canvas.rows, 0, canvas.cols); }
 }  // namespace sla

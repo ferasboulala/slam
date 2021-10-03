@@ -15,7 +15,7 @@ static slam::KDTree tree;
 static cv::Mat map;
 static cv::Mat map_image_frame;
 
-void mouse_callback(int event, int x, int y, int, void *)
+void mouse_callback(int event, int x, int y, int, void*)
 {
     if (event != cv::EVENT_LBUTTONDOWN) return;
     log_info("Querying for %d %d", y, x);
@@ -28,7 +28,7 @@ void mouse_callback(int event, int x, int y, int, void *)
 #else
     slam::Coordinate nn;
     double dist = std::numeric_limits<double>::max();
-    for (const slam::Coordinate &point : tree.list_points())
+    for (const slam::Coordinate& point : tree.list_points())
     {
         if (slam::euclidean_distance(point, {y, x}) < dist)
         {
@@ -42,7 +42,7 @@ void mouse_callback(int event, int x, int y, int, void *)
     cv::imshow("kdt", map_image_frame);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (argc != 3)
     {
@@ -58,10 +58,8 @@ int main(int argc, char **argv)
 
     std::default_random_engine generator;
     generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<std::mt19937::result_type> distribution_i(
-        0, map.rows);
-    std::uniform_int_distribution<std::mt19937::result_type> distribution_j(
-        0, map.cols);
+    std::uniform_int_distribution<std::mt19937::result_type> distribution_i(0, map.rows);
+    std::uniform_int_distribution<std::mt19937::result_type> distribution_j(0, map.cols);
 
     for (unsigned p = 0; p < N_POINTS; ++p)
     {
