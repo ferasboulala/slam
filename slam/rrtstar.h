@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kdtree.h"
+#include "quadtree.h"
 #include "util.h"
 
 #include <opencv2/opencv.hpp>
@@ -16,15 +17,14 @@ public:
     {
         Coordinate point;
         Node* parent;
-        std::vector<Node*> children;
-        unsigned cost;
+        double cost;
     };
 
     /**
      * Map should be in the CV_64F format where each value is the probability
      * that the cell is free.
      **/
-    RRTStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B, double radius);
+    RRTStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B, int reach, int radius);
     ~RRTStar();
 
     /**
@@ -35,7 +35,10 @@ public:
 
     std::vector<Coordinate> recover_path();
 
-    unsigned size() const { return m_size; };
+    unsigned size() const { return m_nodes.size(); };
+private:
+    Node* can_reach(const Coordinate& root_point, const Coordinate& new_point) const;
+
 private:
     bool m_success;
     bool m_used_up;
@@ -46,9 +49,11 @@ private:
 
     Node* m_root;
     Node* m_last_node;
-    unsigned m_size;
-    double m_radius;
-    KDTree m_tree;
+    int m_reach;
+    int m_radius;
+    KDTree m_kd_tree;
+    QuadTree m_quad_tree;
+    std::vector<Node*> m_nodes;
 };
 
 }  // namespace slam

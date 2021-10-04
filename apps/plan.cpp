@@ -13,19 +13,11 @@ static cv::Mat color_map;
 static slam::Coordinate A{-1, -1};
 static slam::Coordinate B{-1, -1};
 static std::vector<slam::Coordinate> path;
+static unsigned n_points;
 
 static constexpr int POINT_SIZE = 10;
 
 //#define DRAW
-//#define ASTAR
-
-#if DRAW
-#ifdef ASTAR
-static int EVERY_OTHER = 1000;
-#else
-static int EVERY_OTHER = 1;
-#endif
-#endif
 
 void mouse_callback(int event, int x, int y, int, void*)
 {
@@ -55,22 +47,17 @@ void mouse_callback(int event, int x, int y, int, void*)
     if (changed && A.i != -1 && B.i != -1)
     {
         log_info("computing path for %d %d -> %d %d", A.i, A.j, B.i, B.j);
-#ifdef ASTAR
-        auto finder = slam::AStar(map, A, B);
-#else
-        auto finder = slam::RRTStar(map, A, B, 10);
-#endif
+        auto finder = slam::RRTStar(map, A, B, 10, 25);
 
 #ifdef DRAW
         cv::Mat* canvas = &color_map;
-        unsigned counter = 0;
 #else
         cv::Mat* canvas = nullptr;
 #endif
-        while (!finder.pathfind(canvas))
+        while (!finder.pathfind(canvas) || finder.size() < n_points)
         {
 #ifdef DRAW
-            if (counter++ % EVERY_OTHER == 0) cv::imshow("plan", *canvas);
+            cv::imshow("plan", *canvas);
             const int key = cv::waitKey(1);
             if (key == 113) exit(0);
 #endif
@@ -93,13 +80,14 @@ void mouse_callback(int event, int x, int y, int, void*)
 
 int main(int argc, char** argv)
 {
-    if (argc != 3)
+    if (argc != 4)
     {
-        log_error("usage : %s <image> kernel_size", argv[0]);
+        log_error("usage : %s <image> kernel_size n_points", argv[0]);
         return -1;
     }
 
     const int kernel_size = std::stoi(argv[2]);
+    n_points = std::stoi(argv[3]);
 
     map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);

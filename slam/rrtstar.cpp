@@ -9,77 +9,136 @@ static constexpr unsigned MAX_N_NODES = 1e6 / sizeof(slam::RRTStar::Node);  // 1
 
 namespace slam
 {
-RRTStar::RRTStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B, double radius)
-    : m_A(A), m_B(B), m_map(map), m_root(new Node{A, nullptr, {}, 0}), m_last_node(nullptr), m_size(0), m_radius(radius)
+RRTStar::RRTStar(const cv::Mat &map, const Coordinate &A, const Coordinate &B, int reach, int radius)
+    : m_A(A),
+      m_B(B),
+      m_map(map),
+      m_root(new Node{A, nullptr, 0}),
+      m_last_node(nullptr),
+      m_reach(reach),
+      m_radius(radius)
 {
-    m_tree.add(A, m_root);
+    assert(radius >= reach);
+    m_kd_tree.add(A, m_root);
+    m_quad_tree.add(A, m_root);
 }
 
-void free(RRTStar::Node* root)
+RRTStar::~RRTStar()
 {
-    if (root == nullptr) return;
+    for (Node *node : m_nodes) delete node;
 
-    for (RRTStar::Node* child : root->children)
-    {
-        free(child);
-    }
-
-    delete root;
+    delete m_root;
 }
 
-RRTStar::~RRTStar() { free(m_root); }
-bool RRTStar::pathfind(cv::Mat* canvas)
+RRTStar::Node *RRTStar::can_reach(const Coordinate &root_point, const Coordinate &new_point) const
 {
-    while (m_size < MAX_N_NODES)
+    double dist = euclidean_distance(root_point, new_point);
+    Coordinate new_point_to_add;
+    const double di = (new_point.i - root_point.i) / dist;
+    const double dj = (new_point.j - root_point.j) / dist;
+    new_point_to_add =
+        Coordinate{static_cast<int>(root_point.i + di * m_reach), static_cast<int>(root_point.j + dj * m_reach)};
+
+    if (!within_boundaries(m_map, new_point_to_add.i, new_point_to_add.j)) return nullptr;
+
+    if (m_map.at<double>(new_point_to_add.i, new_point_to_add.j) < 0.5) return nullptr;
+
+    double x, y;
+    std::tie(x, y) = image_coordinates_to_pose(m_map, new_point_to_add);
+    // FIXME
+    const double angle = std::atan2(-dj, di);
+    const Pose pose{x, y, angle};
+
+    if (raycast<double>(m_map, pose, m_reach).x != -1) return nullptr;
+
+    return new Node{new_point_to_add, nullptr, -1};
+}
+
+bool RRTStar::pathfind(cv::Mat *canvas)
+{
+    while (m_nodes.size() < MAX_N_NODES)
     {
         const Coordinate new_point = random_point(m_map);
-        const auto nn_obj = m_tree.nearest_neighbor(new_point);
-        Coordinate nn;
-        void* root_ptr;
-        std::tie(nn, root_ptr) = nn_obj;
-        Node* root = reinterpret_cast<Node*>(root_ptr);
+        const auto nn = m_kd_tree.nearest_neighbor(new_point);
+        Coordinate point;
+        void *root_ptr;
+        std::tie(point, root_ptr) = nn;
+        Node *root = reinterpret_cast<Node *>(root_ptr);
 
-        double dist = euclidean_distance(root->point, new_point);
-        Coordinate new_point_to_add = new_point;
-        const double di = (new_point.i - root->point.i) / dist;
-        const double dj = (new_point.j - root->point.j) / dist;
-        new_point_to_add = Coordinate{static_cast<int>(root->point.i + di * m_radius),
-                                      static_cast<int>(root->point.j + dj * m_radius)};
+        Node *new_node = can_reach(root->point, new_point);
+        if (new_node == nullptr) continue;
+        new_node->parent = root;
+        new_node->cost = root->cost + m_reach;
+        m_nodes.push_back(new_node);
+        m_kd_tree.add(new_node->point, reinterpret_cast<void *>(new_node));
+        m_quad_tree.add(new_node->point, reinterpret_cast<void *>(new_node));
 
-        if (!within_boundaries(m_map, new_point_to_add.i, new_point_to_add.j)) continue;
+        const Coordinate neighborhood_start = {new_node->point.i - m_radius / 2, new_node->point.j - m_radius / 2};
+        const Coordinate neighborhood_stop = {new_node->point.i + m_radius / 2, new_node->point.j + m_radius / 2};
+        auto neighborhood = m_quad_tree.range_query(neighborhood_start, neighborhood_stop);
 
-        if (m_map.at<double>(new_point_to_add.i, new_point_to_add.j) < 0.5) continue;
+        for (const auto &neighbor : neighborhood)
+        {
+            std::tie(point, root_ptr) = neighbor;
+            root = reinterpret_cast<Node *>(root_ptr);
+            if (root == new_node->parent) continue;
 
-        double x, y;
-        std::tie(x, y) = image_coordinates_to_pose(m_map, new_point_to_add);
-        const double angle = std::atan2(-dj, di);
-        const Pose pose{x, y, angle};
-        if (raycast<double>(m_map, pose, m_radius).x != -1) continue;
+            const double dist = euclidean_distance(root->point, new_node->point);
+            if (root->cost + dist > new_node->cost) continue;
 
-        Node* new_node = new Node{new_point_to_add, root, {}, root->cost};
-        root->children.push_back(new_node);
-        m_tree.add(new_point_to_add, reinterpret_cast<void*>(new_node));
-        ++m_size;
+            Node *dummy = can_reach(root->point, new_node->point);
+            if (dummy == nullptr) continue;
+            delete dummy;
+
+            new_node->parent = root;
+            new_node->cost = root->cost + dist;
+        }
 
         if (canvas != nullptr)
         {
-            cv::line(*canvas, {new_point_to_add.j, new_point_to_add.i}, {root->point.j, root->point.i}, BLUE, 2);
-            cv::circle(*canvas, {new_point_to_add.j, new_point_to_add.i}, 3, RED, cv::FILLED);
+            cv::line(*canvas, {new_node->point.j, new_node->point.i},
+                     {new_node->parent->point.j, new_node->parent->point.i}, BLUE, 1);
+            cv::circle(*canvas, {new_node->point.j, new_node->point.i}, 2, RED, cv::FILLED);
         }
 
-        dist = euclidean_distance(new_point_to_add, m_B);
-        if (dist <= m_radius)
+        for (const auto &neighbor : neighborhood)
         {
-            m_last_node = new_node;
+            std::tie(point, root_ptr) = neighbor;
+            root = reinterpret_cast<Node *>(root_ptr);
+            if (root == new_node->parent) continue;
+
+            Node *dummy = can_reach(root->point, new_node->point);
+            if (dummy == nullptr) continue;
+            delete dummy;
+
+            const double dist = euclidean_distance(root->point, new_node->point);
+            if (root->cost > new_node->cost + dist)
+            {
+                root->cost = new_node->cost + dist;
+                if (canvas != nullptr)
+                {
+                    cv::line(*canvas, {new_node->point.j, new_node->point.i}, {root->point.j, root->point.i}, BLUE, 1);
+                    cv::line(*canvas, {root->parent->point.j, root->parent->point.i}, {root->point.j, root->point.i},
+                             GREY, 1);
+                }
+                root->parent = new_node;
+            }
+        }
+
+        const double dist = euclidean_distance(new_node->point, m_B);
+        if (dist <= m_reach)
+        {
+            if (m_last_node == nullptr || m_last_node->cost > new_node->cost) m_last_node = new_node;
+
             m_success = true;
             return true;
         }
 
-        m_used_up = true;
         return false;
     }
 
     log_error("Reached the maximum allowed states");
+    m_used_up = true;
 
     return true;
 }
@@ -89,12 +148,13 @@ std::vector<Coordinate> RRTStar::recover_path()
     if (!m_success) return {};
 
     std::vector<Coordinate> path;
-    Node* curr = m_last_node;
+    Node *curr = m_last_node;
     while (curr->parent != m_root)
     {
         path.push_back(curr->point);
         curr = curr->parent;
     }
+    path.push_back(curr->parent->point);
 
     return path;
 }
