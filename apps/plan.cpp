@@ -14,10 +14,9 @@ static slam::Coordinate A{-1, -1};
 static slam::Coordinate B{-1, -1};
 static std::vector<slam::Coordinate> path;
 static unsigned n_points;
+static bool draw;
 
 static constexpr int POINT_SIZE = 10;
-
-//#define DRAW
 
 void mouse_callback(int event, int x, int y, int, void*)
 {
@@ -47,26 +46,23 @@ void mouse_callback(int event, int x, int y, int, void*)
     if (changed && A.i != -1 && B.i != -1)
     {
         log_info("computing path for %d %d -> %d %d", A.i, A.j, B.i, B.j);
-        auto finder = slam::RRTStar(map, A, B, 10, 25);
+        auto finder = slam::RRTStar(map, A, B, 20, 50);
 
-#ifdef DRAW
-        cv::Mat* canvas = &color_map;
-#else
-        cv::Mat* canvas = nullptr;
-#endif
+        cv::Mat* canvas = draw ? &color_map : nullptr;
         while (!finder.pathfind(canvas) || finder.size() < n_points)
         {
-#ifdef DRAW
-            cv::imshow("plan", *canvas);
-            const int key = cv::waitKey(1);
-            if (key == 113) exit(0);
-#endif
+            if (draw)
+            {
+                cv::imshow("plan", *canvas);
+                const int key = cv::waitKey(1);
+                if (key == 113) exit(0);
+            }
         }
 
         slam::Coordinate prev = B;
         for (const slam::Coordinate& coord : finder.recover_path())
         {
-            cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
+            cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 3);
             prev = coord;
         }
         cv::imshow("plan", color_map);
@@ -80,14 +76,15 @@ void mouse_callback(int event, int x, int y, int, void*)
 
 int main(int argc, char** argv)
 {
-    if (argc != 4)
+    if (argc != 5)
     {
-        log_error("usage : %s <image> kernel_size n_points", argv[0]);
+        log_error("usage : %s <image> kernel_size n_points (draw|nodraw)", argv[0]);
         return -1;
     }
 
     const int kernel_size = std::stoi(argv[2]);
     n_points = std::stoi(argv[3]);
+    draw = std::string(argv[4]) == "draw";
 
     map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
