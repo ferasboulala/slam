@@ -44,12 +44,11 @@ RRTStar::Node *RRTStar::can_reach(const Coordinate &root_point, const Coordinate
 
     if (m_map.at<double>(new_point_to_add.i, new_point_to_add.j) < 0.5) return nullptr;
 
-    double x, y;
-    std::tie(x, y) = image_coordinates_to_pose(m_map, root_point);
+    Pose pose = image_coordinates_to_pose(m_map, root_point);
     const double dx = dj;
     const double dy = -di;
     const double angle = std::atan2(dy, dx);
-    const Pose pose{x, y, angle};
+    pose.theta = angle;
 
     if (raycast<double>(m_map, pose, m_reach).x != -1) return nullptr;
 
@@ -117,9 +116,9 @@ bool RRTStar::pathfind(cv::Mat *canvas)
             root->cost = new_node->cost + dist;
             if (canvas != nullptr)
             {
-                cv::line(*canvas, {new_node->point.j, new_node->point.i}, {root->point.j, root->point.i}, BLUE, 1);
-                cv::line(*canvas, {root->parent->point.j, root->parent->point.i}, {root->point.j, root->point.i}, BLACK,
+                cv::line(*canvas, {root->parent->point.j, root->parent->point.i}, {root->point.j, root->point.i}, WHITE,
                          1);
+                cv::line(*canvas, {new_node->point.j, new_node->point.i}, {root->point.j, root->point.i}, BLUE, 1);
             }
             root->parent = new_node;
         }

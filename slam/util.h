@@ -31,9 +31,9 @@ inline std::tuple<int, int> pose_to_image_coordinates(const cv::Mat& map, const 
     return std::tuple<int, int>(map.rows - pose.y - 1, pose.x);
 }
 
-inline std::tuple<double, double> image_coordinates_to_pose(const cv::Mat& map, const Coordinate& coord)
+inline Pose image_coordinates_to_pose(const cv::Mat& map, const Coordinate& coord)
 {
-    return std::tuple<double, double>(coord.j, map.rows - coord.i);
+    return Pose{static_cast<double>(coord.j), static_cast<double>(map.rows - coord.i), 0};
 }
 
 inline bool within_boundaries(const cv::Mat& map, const int i, const int j)
@@ -97,6 +97,14 @@ inline int euclidean_distance_squared(const Coordinate& A, const Coordinate& B)
 inline double euclidean_distance(const Coordinate& A, const Coordinate& B)
 {
     return std::sqrt(static_cast<double>(euclidean_distance_squared(A, B)));
+}
+
+inline double euclidean_distance(const Pose& A, const Pose& B)
+{
+    const double dx = B.x - A.x;
+    const double dy = B.y - A.y;
+
+    return std::sqrt(dx * dx + dy * dy);
 }
 
 }  // namespace

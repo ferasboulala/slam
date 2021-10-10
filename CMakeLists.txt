@@ -42,6 +42,7 @@ macro(app progname source)
 endmacro()
 
 app("monte_carlo_localization" "apps/monte_carlo_localization.cpp")
-app("plan" "apps/plan.cpp")
+app("rrt_planner" "apps/rrt_planner.cpp")
+app("hastar_planner" "apps/hastar_planner.cpp")
 app("nearest_neighbor" "apps/nearest_neighbor.cpp")
 app("regions" "apps/regions.cpp")

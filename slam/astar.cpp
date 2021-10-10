@@ -83,16 +83,6 @@ bool AStar::pathfind(cv::Mat* canvas)
 
         for (const Coordinate& coord : adjacency_8(X))
         {
-            // if (canvas && within_boundaries(m_map, coord) &&
-            //     m_map.at<double>(coord.i, coord.j) > 0.5)
-            // {
-            //     // review
-            //     cv::Vec3f &color = canvas->at<cv::Vec3f>(coord.i, coord.j);
-            //     color[0] = GREY[0];
-            //     color[1] = GREY[1];
-            //     color[2] = GREY[2];
-            // }
-
             double new_dist = dist;
             if (coord.i != X.i && coord.j != X.j)
                 new_dist += std::sqrt(2.0);
