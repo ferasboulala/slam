@@ -22,13 +22,18 @@ struct Coordinate
     int i;
     int j;
 
-    inline bool operator==(const Coordinate& other) { return i == other.i && j == other.j; }
-    inline bool operator!=(const Coordinate& other) { return !(*this == other); }
+    inline bool operator==(const Coordinate& other) const { return i == other.i && j == other.j; }
+    inline bool operator!=(const Coordinate& other) const { return !(*this == other); }
 };
 
 inline std::tuple<int, int> pose_to_image_coordinates(const cv::Mat& map, const Pose& pose)
 {
     return std::tuple<int, int>(map.rows - pose.y - 1, pose.x);
+}
+
+inline Coordinate pose_to_image_coordinates_(const cv::Mat &map, const Pose &pose)
+{
+    return Coordinate{static_cast<int>(map.rows - pose.y - 1), static_cast<int>(pose.x)};
 }
 
 inline Pose image_coordinates_to_pose(const cv::Mat& map, const Coordinate& coord)
@@ -39,6 +44,11 @@ inline Pose image_coordinates_to_pose(const cv::Mat& map, const Coordinate& coor
 inline bool within_boundaries(const cv::Mat& map, const int i, const int j)
 {
     return i < map.rows && j < map.cols && i >= 0 && j >= 0;
+}
+
+inline bool within_boundaries(const cv::Mat &map, Coordinate &point)
+{
+    return point.i < map.rows && point.j < map.cols && point.i >= 0 && point.j >= 0;
 }
 
 inline bool within_bounding_box(const Coordinate& point, const Coordinate& start, const Coordinate& stop)
