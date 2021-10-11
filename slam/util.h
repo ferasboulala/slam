@@ -31,7 +31,7 @@ inline std::tuple<int, int> pose_to_image_coordinates(const cv::Mat& map, const 
     return std::tuple<int, int>(map.rows - pose.y - 1, pose.x);
 }
 
-inline Coordinate pose_to_image_coordinates_(const cv::Mat &map, const Pose &pose)
+inline Coordinate pose_to_image_coordinates_(const cv::Mat& map, const Pose& pose)
 {
     return Coordinate{static_cast<int>(map.rows - pose.y - 1), static_cast<int>(pose.x)};
 }
@@ -46,7 +46,7 @@ inline bool within_boundaries(const cv::Mat& map, const int i, const int j)
     return i < map.rows && j < map.cols && i >= 0 && j >= 0;
 }
 
-inline bool within_boundaries(const cv::Mat &map, Coordinate &point)
+inline bool within_boundaries(const cv::Mat& map, Coordinate& point)
 {
     return point.i < map.rows && point.j < map.cols && point.i >= 0 && point.j >= 0;
 }

@@ -3,11 +3,24 @@
 
 namespace slam
 {
-HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length, unsigned theta_res, unsigned branching_factor)
-    : m_success(false), m_used_up(false), m_A(A), m_B(B), m_map(map), m_size(0), m_v(v), m_theta(theta), m_length(length), m_branching_factor(branching_factor)
+HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length,
+                         unsigned branching_factor)
+    : m_success(false),
+      m_used_up(false),
+      m_A(A),
+      m_B(B),
+      m_map(map),
+      m_size(0),
+      m_v(v),
+      m_theta(theta),
+      m_length(length),
+      m_branching_factor(branching_factor)
 {
     m_target = pose_to_cuboid_index(B);
-    m_costs = Cuboid(map.rows, Grid(map.cols, std::vector<double>(theta_res, std::numeric_limits<double>::max())));
+    assert(theta < M_PI / 2);
+    const unsigned theta_res = 2 * M_PI / theta;
+    m_costs = Cuboid(map.rows, Grid(map.cols, std::vector<std::pair<double, CuboidIndex>>(
+                                                  theta_res, {std::numeric_limits<double>::max(), {-1, -1, -1}})));
 
     m_heuristic = [this](const Pose& X) { return euclidean_distance(X, m_B); };
 
@@ -15,11 +28,14 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
         return X.cost + m_heuristic(X.pose) > Y.cost + m_heuristic(Y.pose);
     };
 
-    m_q.push_back({A, 0.0});
+    const CuboidIndex start = pose_to_cuboid_index(A);
+    m_costs[start.i][start.j][start.k] = {0, start};
+    m_q.push_back({A, 0.0, start});
     std::push_heap(m_q.begin(), m_q.end(), m_comp);
 }
 
-static std::vector<std::pair<Pose, double>> steering_adjacency(const Pose &pose, double v, double theta, double L, unsigned branching_factor)
+static std::vector<std::pair<Pose, double>> steering_adjacency(const Pose& pose, double v, double theta, double L,
+                                                               unsigned branching_factor)
 {
     constexpr double EPSILON = 1e-6;
 
@@ -42,7 +58,7 @@ static std::vector<std::pair<Pose, double>> steering_adjacency(const Pose &pose,
     std::vector<std::pair<Pose, double>> neighborhood;
     for (double vel : velocities)
     {
-        const double cost_factor = vel < 0 ? 2 : 1; // more costly to go backwards
+        const double cost_factor = vel < 0 ? 2 : 1;  // more costly to go backwards
         for (unsigned i = 0; i < thetas.size(); ++i)
         {
             const double angle = thetas[i];
@@ -60,7 +76,7 @@ static std::vector<std::pair<Pose, double>> steering_adjacency(const Pose &pose,
     return neighborhood;
 }
 
-bool HybridAStar::can_reach(const Pose &src, const Pose &dst) const
+bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
 {
     const Coordinate dst_coord = pose_to_image_coordinates_(m_map, dst);
     if (!within_boundaries(m_map, dst_coord)) return false;
@@ -74,6 +90,7 @@ bool HybridAStar::can_reach(const Pose &src, const Pose &dst) const
     Pose raycast_pose = src;
     raycast_pose.theta = angle;
 
+    // FIXME : Use circular raycast using this formula until we reach the point
     return raycast<double>(m_map, raycast_pose, dist).x == -1;
 }
 
@@ -110,20 +127,21 @@ bool HybridAStar::pathfind(cv::Mat*)
             return true;
         }
 
-        if (X.cost >= m_costs[X_index.i][X_index.j][X_index.k]) continue;
+        if (X.cost >= std::get<0>(m_costs[X_index.i][X_index.j][X_index.k])) continue;
 
-        m_costs[X_index.i][X_index.j][X_index.k] = X.cost;
+        m_costs[X_index.i][X_index.j][X_index.k] = {X.cost, X.parent};
 
-         for (const auto &neighbor : steering_adjacency(X.pose, m_v, m_theta, m_length, m_branching_factor))
-         {
-             Pose pose;
-             double cost;
-             std::tie(pose, cost) = neighbor;
+        CuboidIndex parent = pose_to_cuboid_index(X.pose);
+        for (const auto& neighbor : steering_adjacency(X.pose, m_v, m_theta, m_length, m_branching_factor))
+        {
+            Pose pose;
+            double cost;
+            std::tie(pose, cost) = neighbor;
 
-             if (!can_reach(X.pose, pose)) continue;
-             m_q.push_back({pose, X.cost + cost});
-             std::push_heap(m_q.begin(), m_q.end(), m_comp);
-         }
+            if (!can_reach(X.pose, pose)) continue;
+            m_q.push_back({pose, X.cost + cost, parent});
+            std::push_heap(m_q.begin(), m_q.end(), m_comp);
+        }
 
         ++m_size;
 
@@ -136,10 +154,25 @@ bool HybridAStar::pathfind(cv::Mat*)
     return true;
 }
 
-std::vector<Coordinate> HybridAStar::recover_path() { return {}; }
+std::vector<Coordinate> HybridAStar::recover_path()
+{
+    if (!m_success) return {};
 
+    std::vector<Coordinate> path;
+    CuboidIndex next = m_target;
+    const CuboidIndex start = pose_to_cuboid_index(m_A);
+    while (next != start)
+    {
+        path.push_back({next.i, next.j});
+        next = std::get<1>(m_costs[next.i][next.j][next.k]);
+    }
 
-HybridAStar::CuboidIndex HybridAStar::pose_to_cuboid_index(const Pose &pose) const
+    std::reverse(path.begin(), path.end());
+
+    return path;
+}
+
+HybridAStar::CuboidIndex HybridAStar::pose_to_cuboid_index(const Pose& pose) const
 {
     const Coordinate coord = pose_to_image_coordinates_(m_map, pose);
     const double angle = normalize_angle(pose.theta + 2 * M_PI);

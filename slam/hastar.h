@@ -13,7 +13,8 @@ namespace slam
 class HybridAStar
 {
 public:
-    HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length = 1, unsigned theta_res = 10, unsigned branching_factor = 3);
+    HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length = 1,
+                unsigned branching_factor = 3);
 
     ~HybridAStar() = default;
 
@@ -27,15 +28,17 @@ private:
         int j;
         int k;
         inline bool operator==(const CuboidIndex& other) const { return i == other.i && j == other.j && k == other.k; }
+        inline bool operator!=(const CuboidIndex& other) const { return !(*this == other); }
     };
 
-    CuboidIndex pose_to_cuboid_index(const Pose &pose) const;
-    bool can_reach(const Pose &src, const Pose &dst) const;
+    CuboidIndex pose_to_cuboid_index(const Pose& pose) const;
+    bool can_reach(const Pose& src, const Pose& dst) const;
 
     struct Node
     {
         Pose pose;
         double cost;
+        CuboidIndex parent;
     };
     static const unsigned MAX_QUEUE_SIZE = 1e9 / sizeof(Node);  // 1 gigabyte
 
@@ -54,7 +57,7 @@ private:
     double m_length;
     unsigned m_branching_factor;
 
-    using Grid = std::vector<std::vector<double>>;
+    using Grid = std::vector<std::vector<std::pair<double, CuboidIndex>>>;
     using Cuboid = std::vector<Grid>;
     Cuboid m_costs;
     std::vector<Node> m_q;  // point, orientation, cost
