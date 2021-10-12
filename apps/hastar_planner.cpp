@@ -17,7 +17,7 @@ static bool draw;
 
 #define DEG2RAD(x) (x * M_PI / 180)
 
-static constexpr double VEL = 2;
+static constexpr double VEL = 10;
 static constexpr double STEERING_ANGLE = DEG2RAD(40);
 static constexpr double DESIRED_DELTA_STEERING_ANGLE = DEG2RAD(10);
 static constexpr double VEHICLE_LENGTH = VEL * std::tan(STEERING_ANGLE) / DESIRED_DELTA_STEERING_ANGLE;
@@ -60,10 +60,16 @@ void mouse_callback(int event, int x, int y, int, void*)
         const slam::Pose A_pose = slam::image_coordinates_to_pose(map, A);
         slam::Pose B_pose = slam::image_coordinates_to_pose(map, B);
         B_pose.theta = M_PI / 2;
-        auto finder = slam::HybridAStar(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 10, 3, 5, true);
+        auto finder = slam::HybridAStar(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
         cv::Mat* canvas = draw ? &color_map : nullptr;
         while (!finder.pathfind(canvas))
         {
+            if (draw)
+            {
+                cv::imshow("hastar", *canvas);
+                const int key = cv::waitKey(1);
+                if (key == 113) exit(0);
+            }
         }
 
         slam::Coordinate prev = A;

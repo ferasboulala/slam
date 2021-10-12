@@ -90,7 +90,7 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
     return raycast<double>(m_map, raycast_pose, dist).x == -1;
 }
 
-bool HybridAStar::pathfind(cv::Mat*)
+bool HybridAStar::pathfind(cv::Mat* canvas)
 {
     if (m_success || m_used_up)
     {
@@ -131,6 +131,12 @@ bool HybridAStar::pathfind(cv::Mat*)
             if (!can_reach(X.pose, pose)) continue;
             m_q.push_back({pose, X.cost + cost, euclidean_distance(pose, m_B), X_index});
             std::push_heap(m_q.begin(), m_q.end(), m_comp);
+
+            if (canvas)
+            {
+                const CuboidIndex Y_index = pose_to_cuboid_index(pose);
+                cv::line(*canvas, {X_index.j, X_index.i}, {Y_index.j, Y_index.i}, BLUE, 1);
+            }
         }
 
         ++m_size;
