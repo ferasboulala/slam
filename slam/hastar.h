@@ -14,8 +14,8 @@ namespace slam
 class HybridAStar
 {
 public:
-    HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length = 1,
-                int branching_factor = 3, bool m_diff_drive = true);
+    HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length, unsigned theta_res,
+                int branching_factor, double tol, bool m_diff_drive = true);
 
     ~HybridAStar() = default;
 
@@ -59,6 +59,7 @@ private:
     double m_v;
     double m_theta;
     double m_length;
+    double m_tol;
     bool m_diff_drive;
 
     // Performance reasons

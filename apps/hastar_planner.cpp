@@ -2,6 +2,7 @@
 #include "colors.h"
 #include "thirdparty/log.h"
 
+#include <cmath>
 #include <string>
 
 #include "opencv2/opencv.hpp"
@@ -13,9 +14,13 @@ static slam::Coordinate A{-1, -1};
 static slam::Coordinate B{-1, -1};
 static std::vector<slam::Coordinate> path;
 static bool draw;
-static const double VEL = 2;
-static const double STEERING_ANGLE = 40 * M_PI / 180;
-static const double VEHICLE_LENGTH = 10;
+
+#define DEG2RAD(x) (x * M_PI / 180)
+
+static constexpr double VEL = 2;
+static constexpr double STEERING_ANGLE = DEG2RAD(40);
+static constexpr double DESIRED_DELTA_STEERING_ANGLE = DEG2RAD(10);
+static constexpr double VEHICLE_LENGTH = VEL * std::tan(STEERING_ANGLE) / DESIRED_DELTA_STEERING_ANGLE;
 
 static constexpr int POINT_SIZE = 7;
 
@@ -55,21 +60,25 @@ void mouse_callback(int event, int x, int y, int, void*)
         const slam::Pose A_pose = slam::image_coordinates_to_pose(map, A);
         slam::Pose B_pose = slam::image_coordinates_to_pose(map, B);
         B_pose.theta = M_PI / 2;
-        auto finder = slam::HybridAStar(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH);
+        auto finder = slam::HybridAStar(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 10, 3, 5, true);
         cv::Mat* canvas = draw ? &color_map : nullptr;
         while (!finder.pathfind(canvas))
         {
         }
 
         slam::Coordinate prev = A;
-        for (const slam::Coordinate& coord : finder.recover_path())
+        const std::vector<slam::Coordinate> path = finder.recover_path();
+        for (const slam::Coordinate& coord : path)
         {
             cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
             prev = coord;
         }
 
         cv::imshow("hastar", color_map);
-        log_info("Found path after %u states explored", finder.size());
+        if (path.empty())
+            log_info("No path found path after %u states explored", finder.size());
+        else
+            log_info("Found path after %u states explored", finder.size());
     }
 }
 

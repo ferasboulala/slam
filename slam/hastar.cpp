@@ -7,7 +7,7 @@
 namespace slam
 {
 HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length,
-                         int branching_factor, bool diff_drive)
+                         unsigned theta_res, int branching_factor, double tol, bool diff_drive)
     : m_success(false),
       m_used_up(false),
       m_A(A),
@@ -17,10 +17,9 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
       m_v(v),
       m_theta(theta),
       m_length(length),
+      m_tol(tol),
       m_diff_drive(diff_drive)
 {
-    assert(theta < M_PI / 2 && "Theta must be small enough for a sufficient resolution");
-    const unsigned theta_res = 2 * M_PI / theta;
     m_costs = Cuboid(map.rows, Grid(map.cols, std::vector<std::pair<double, CuboidIndex>>(
                                                   theta_res, {std::numeric_limits<double>::max(), {-1, -1, -1}})));
 
@@ -51,7 +50,7 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
 std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose& pose) const
 {
     std::vector<std::pair<Pose, double>> neighborhood;
-    constexpr double REVERSE_FACTOR = 2;
+    constexpr double REVERSE_FACTOR = 10;
     for (double vel : m_velocities)
     {
         const double cost_factor = vel < 0 ? REVERSE_FACTOR : 1;  // more costly to go backwards
@@ -115,15 +114,12 @@ bool HybridAStar::pathfind(cv::Mat*)
         if (X.cost >= std::get<0>(m_costs[X_index.i][X_index.j][X_index.k])) continue;
         m_costs[X_index.i][X_index.j][X_index.k] = {X.cost, X.parent};
 
-        if (m_diff_drive)
-            m_success = pose_to_image_coordinates_(m_map, X.pose) == pose_to_image_coordinates_(m_map, m_B);
-        else if (X_index == m_target)
-            m_success = true;
-
-        if (m_success)
+        const bool within_tol = euclidean_distance(X.pose, m_B) <= m_tol;
+        if (within_tol)
         {
             m_last_node = X_index;
-            return true;
+            m_success = m_diff_drive || X_index.k == m_target.k;
+            if (m_success) return true;
         }
 
         for (const auto& neighbor : steering_adjacency(X.pose))
@@ -142,7 +138,6 @@ bool HybridAStar::pathfind(cv::Mat*)
         return false;
     }
 
-    m_success = false;
     m_used_up = true;
 
     return true;
