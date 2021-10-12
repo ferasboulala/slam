@@ -13,8 +13,11 @@ static slam::Coordinate A{-1, -1};
 static slam::Coordinate B{-1, -1};
 static std::vector<slam::Coordinate> path;
 static bool draw;
+static const double VEL = 3;
+static const double STEERING_ANGLE = 30 * M_PI / 180;
+static const double VEHICLE_LENGTH = 10;
 
-static constexpr int POINT_SIZE = 10;
+static constexpr int POINT_SIZE = 7;
 
 void mouse_callback(int event, int x, int y, int, void*)
 {
@@ -41,15 +44,30 @@ void mouse_callback(int event, int x, int y, int, void*)
             break;
     }
 
+    if (changed)
+    {
+        cv::imshow("hastar", color_map);
+    }
+
     if (changed && A.i != -1 && B.i != -1)
     {
         log_info("computing path for %d %d -> %d %d", A.i, A.j, B.i, B.j);
         auto finder = slam::HybridAStar(map, slam::image_coordinates_to_pose(map, A),
-                                        slam::image_coordinates_to_pose(map, B), 0, 10);
-    }
-    else if (changed)
-    {
+                                        slam::image_coordinates_to_pose(map, B), VEL, STEERING_ANGLE, VEHICLE_LENGTH);
+        cv::Mat* canvas = draw ? &color_map : nullptr;
+        while (!finder.pathfind(canvas))
+        {
+        }
+
+        slam::Coordinate prev = A;
+        for (const slam::Coordinate& coord : finder.recover_path())
+        {
+            cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
+            prev = coord;
+        }
+
         cv::imshow("hastar", color_map);
+        log_info("Found path after %u states explored", finder.size());
     }
 }
 

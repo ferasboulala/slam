@@ -14,13 +14,13 @@ class HybridAStar
 {
 public:
     HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length = 1,
-                unsigned branching_factor = 3);
+                int branching_factor = 3);
 
     ~HybridAStar() = default;
 
     bool pathfind(cv::Mat* canvas);
     std::vector<Coordinate> recover_path();
-
+    unsigned size() const { return m_size; }
 private:
     struct CuboidIndex
     {
@@ -38,6 +38,7 @@ private:
     {
         Pose pose;
         double cost;
+        double dist_to_target;
         CuboidIndex parent;
     };
     static const unsigned MAX_QUEUE_SIZE = 1e9 / sizeof(Node);  // 1 gigabyte
@@ -55,13 +56,12 @@ private:
     double m_v;
     double m_theta;
     double m_length;
-    unsigned m_branching_factor;
+    int m_branching_factor;
 
     using Grid = std::vector<std::vector<std::pair<double, CuboidIndex>>>;
     using Cuboid = std::vector<Grid>;
     Cuboid m_costs;
     std::vector<Node> m_q;  // point, orientation, cost
-    std::function<double(const Pose& X)> m_heuristic;
     std::function<bool(const Node& X, const Node& Y)> m_comp;
 };
 
