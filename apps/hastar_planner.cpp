@@ -13,8 +13,8 @@ static slam::Coordinate A{-1, -1};
 static slam::Coordinate B{-1, -1};
 static std::vector<slam::Coordinate> path;
 static bool draw;
-static const double VEL = 3;
-static const double STEERING_ANGLE = 30 * M_PI / 180;
+static const double VEL = 2;
+static const double STEERING_ANGLE = 40 * M_PI / 180;
 static const double VEHICLE_LENGTH = 10;
 
 static constexpr int POINT_SIZE = 7;
@@ -52,8 +52,10 @@ void mouse_callback(int event, int x, int y, int, void*)
     if (changed && A.i != -1 && B.i != -1)
     {
         log_info("computing path for %d %d -> %d %d", A.i, A.j, B.i, B.j);
-        auto finder = slam::HybridAStar(map, slam::image_coordinates_to_pose(map, A),
-                                        slam::image_coordinates_to_pose(map, B), VEL, STEERING_ANGLE, VEHICLE_LENGTH);
+        const slam::Pose A_pose = slam::image_coordinates_to_pose(map, A);
+        slam::Pose B_pose = slam::image_coordinates_to_pose(map, B);
+        B_pose.theta = M_PI / 2;
+        auto finder = slam::HybridAStar(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH);
         cv::Mat* canvas = draw ? &color_map : nullptr;
         while (!finder.pathfind(canvas))
         {

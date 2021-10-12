@@ -7,7 +7,7 @@
 namespace slam
 {
 HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length,
-                         int branching_factor)
+                         int branching_factor, bool diff_drive)
     : m_success(false),
       m_used_up(false),
       m_A(A),
@@ -17,7 +17,8 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
       m_v(v),
       m_theta(theta),
       m_length(length),
-      m_branching_factor(branching_factor)
+      m_branching_factor(branching_factor),
+      m_diff_drive(diff_drive)
 {
     assert(theta < M_PI / 2 && "Theta must be small enough for a sufficient resolution");
     const unsigned theta_res = 2 * M_PI / theta;
@@ -96,7 +97,7 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
 
 bool HybridAStar::pathfind(cv::Mat*)
 {
-    if (m_used_up)
+    if (m_success || m_used_up)
     {
         log_error("HA* object must now be deallocated");
         return true;
@@ -123,10 +124,14 @@ bool HybridAStar::pathfind(cv::Mat*)
         if (X.cost >= std::get<0>(m_costs[X_index.i][X_index.j][X_index.k])) continue;
         m_costs[X_index.i][X_index.j][X_index.k] = {X.cost, X.parent};
 
-        if (X_index == m_target)
-        {
+        if (m_diff_drive)
+            m_success = pose_to_image_coordinates_(m_map, X.pose) == pose_to_image_coordinates_(m_map, m_B);
+        else if (X_index == m_target)
             m_success = true;
-            m_used_up = true;
+
+        if (m_success)
+        {
+            m_last_node = X_index;
             return true;
         }
 
@@ -157,7 +162,7 @@ std::vector<Coordinate> HybridAStar::recover_path()
     if (!m_success) return {};
 
     std::vector<Coordinate> path;
-    CuboidIndex next = m_target;
+    CuboidIndex next = m_last_node;
     const CuboidIndex start = pose_to_cuboid_index(m_A);
     while (next != start)
     {

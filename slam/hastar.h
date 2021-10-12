@@ -14,7 +14,7 @@ class HybridAStar
 {
 public:
     HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length = 1,
-                int branching_factor = 3);
+                int branching_factor = 3, bool m_diff_drive = true);
 
     ~HybridAStar() = default;
 
@@ -49,6 +49,7 @@ private:
     Pose m_A;
     Pose m_B;
     CuboidIndex m_target;
+    CuboidIndex m_last_node;
 
     const cv::Mat& m_map;
 
@@ -57,6 +58,7 @@ private:
     double m_theta;
     double m_length;
     int m_branching_factor;
+    bool m_diff_drive;
 
     using Grid = std::vector<std::vector<std::pair<double, CuboidIndex>>>;
     using Cuboid = std::vector<Grid>;
