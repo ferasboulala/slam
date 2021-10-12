@@ -4,6 +4,7 @@
 #include "thirdparty/log.h"
 #include "util.h"
 
+#include <array>
 #include <functional>
 #include <limits>
 #include <vector>
@@ -33,6 +34,7 @@ private:
 
     CuboidIndex pose_to_cuboid_index(const Pose& pose) const;
     bool can_reach(const Pose& src, const Pose& dst) const;
+    std::vector<std::pair<Pose, double>> steering_adjacency(const Pose& pose) const;
 
     struct Node
     {
@@ -57,8 +59,12 @@ private:
     double m_v;
     double m_theta;
     double m_length;
-    int m_branching_factor;
     bool m_diff_drive;
+
+    // Performance reasons
+    std::array<double, 2> m_velocities;
+    std::vector<double> m_thetas;
+    std::vector<double> m_steering_costs;
 
     using Grid = std::vector<std::vector<std::pair<double, CuboidIndex>>>;
     using Cuboid = std::vector<Grid>;

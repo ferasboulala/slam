@@ -17,7 +17,6 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
       m_v(v),
       m_theta(theta),
       m_length(length),
-      m_branching_factor(branching_factor),
       m_diff_drive(diff_drive)
 {
     assert(theta < M_PI / 2 && "Theta must be small enough for a sufficient resolution");
@@ -32,44 +31,41 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
     const CuboidIndex start = pose_to_cuboid_index(A);
     m_q.push_back({A, 0.0, euclidean_distance(A, B), start});
     std::push_heap(m_q.begin(), m_q.end(), m_comp);
-}
-
-static std::vector<std::pair<Pose, double>> steering_adjacency(const Pose& pose, double v, double theta, double L,
-                                                               int branching_factor)
-{
-    constexpr double EPSILON = 1e-6;
 
     assert(branching_factor > 2);
-    assert(branching_factor % 2 == 1 && "Branching factor must be odd");
+    assert(branching_factor % 2 == 1);
 
-    std::array<double, 2> velocities = {v, -v};
-    std::vector<double> thetas;
-    std::vector<double> costs;
-
-    const double COST_SLOPE = 1.0 / (branching_factor - 1);
+    const double COST_SLOPE = v / (branching_factor - 1);
     const double dtheta = theta * 2 / (branching_factor - 1);
     const int mid = branching_factor / 2;
     for (int i = 0; i < branching_factor; ++i)
     {
-        thetas.push_back(-theta + i * dtheta);
-        costs.push_back(std::abs(i - mid) * COST_SLOPE);
+        m_thetas.push_back(-theta + i * dtheta);
+        m_steering_costs.push_back(std::abs(i - mid) * COST_SLOPE);
     }
 
+    m_velocities[0] = v;
+    m_velocities[1] = -v;
+}
+
+std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose& pose) const
+{
     std::vector<std::pair<Pose, double>> neighborhood;
-    for (double vel : velocities)
+    constexpr double REVERSE_FACTOR = 2;
+    for (double vel : m_velocities)
     {
-        const double cost_factor = vel < 0 ? 2 : 1;  // more costly to go backwards
-        for (unsigned i = 0; i < thetas.size(); ++i)
+        const double cost_factor = vel < 0 ? REVERSE_FACTOR : 1;  // more costly to go backwards
+        for (unsigned i = 0; i < m_thetas.size(); ++i)
         {
-            const double angle = thetas[i];
-            const double cost = costs[i];
+            const double angle = m_thetas[i];
+            const double cost = m_steering_costs[i];
 
             Pose new_pose = pose;
-            new_pose.theta += vel / L * std::tan(angle + EPSILON);
+            new_pose.theta += vel / m_length * std::tan(angle);
             new_pose.x += vel * std::cos(new_pose.theta);
             new_pose.y += vel * std::sin(new_pose.theta);
 
-            neighborhood.push_back({new_pose, v + cost * cost_factor});
+            neighborhood.push_back({new_pose, m_v + cost * cost_factor});
         }
     }
 
@@ -115,11 +111,6 @@ bool HybridAStar::pathfind(cv::Mat*)
         std::pop_heap(m_q.begin(), m_q.end(), m_comp);
         m_q.pop_back();
 
-        const Coordinate X_coord = pose_to_image_coordinates_(m_map, X.pose);
-        if (!within_boundaries(m_map, X_coord)) continue;
-
-        if (m_map.at<double>(X_coord.i, X_coord.j) < 0.5) continue;
-
         const CuboidIndex X_index = pose_to_cuboid_index(X.pose);
         if (X.cost >= std::get<0>(m_costs[X_index.i][X_index.j][X_index.k])) continue;
         m_costs[X_index.i][X_index.j][X_index.k] = {X.cost, X.parent};
@@ -135,7 +126,7 @@ bool HybridAStar::pathfind(cv::Mat*)
             return true;
         }
 
-        for (const auto& neighbor : steering_adjacency(X.pose, m_v, m_theta, m_length, m_branching_factor))
+        for (const auto& neighbor : steering_adjacency(X.pose))
         {
             Pose pose;
             double cost;
