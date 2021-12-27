@@ -15,6 +15,7 @@ public:
      * that the cell is free.
      **/
     AStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B);
+    Astar(const Astar& other) = delete;
 
     ~AStar() = default;
 

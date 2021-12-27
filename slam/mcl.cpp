@@ -34,28 +34,6 @@ void MCL::reset_particles()
     }
 }
 
-// TODO : Could be moved to utils
-Pose MCL::average_pose() const
-{
-    double avg_x = 0;
-    double avg_y = 0;
-    double theta_x = 0;
-    double theta_y = 0;
-    for (const Particle& particle : m_particles)
-    {
-        avg_x += particle.pose.x;
-        avg_y += particle.pose.y;
-        theta_x += std::cos(particle.pose.theta);
-        theta_y += std::sin(particle.pose.theta);
-    }
-
-    avg_x /= m_particles.size();
-    avg_y /= m_particles.size();
-    const double avg_theta = std::atan2(theta_y, theta_x);
-
-    return {avg_x, avg_y, avg_theta};
-}
-
 void MCL::predict(const Odometry& odom, const std::array<double, 4>& alphas)
 {
     for (Particle& particle : m_particles)

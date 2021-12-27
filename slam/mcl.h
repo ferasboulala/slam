@@ -21,15 +21,11 @@ public:
                 double max_dist,
                 int n_threads = -1);
 
-    Pose average_pose() const;
     const std::vector<Particle>& get_particles() const { return m_particles; }
 
 private:
-    // Creates random particles.
     void reset_particles();
-    // Filters out particles on obstacles and outside the map.
     void filter_particles();
-    // Selects the best fit particles.
     void resample_particles();
 
     std::vector<Particle> fitness_selection(int n);

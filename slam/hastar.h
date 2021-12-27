@@ -24,6 +24,7 @@ public:
                 int branching_factor,
                 double tol,
                 bool m_diff_drive = true);
+    HybridAstar(const HybridAstar& other) = delete;
 
     ~HybridAStar() = default;
 

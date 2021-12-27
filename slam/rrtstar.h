@@ -24,6 +24,7 @@ public:
      * that the cell is free.
      **/
     RRTStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B, int reach, int radius);
+    RRTStar(const RRTStar& other) = delete;
     ~RRTStar();
 
     /**

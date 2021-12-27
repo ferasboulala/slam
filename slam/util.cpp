@@ -62,4 +62,25 @@ Coordinate random_point(const cv::Mat& map)
     return {static_cast<int>(distribution_i(generator)), static_cast<int>(distribution_j(generator))};
 }
 
+Pose average_pose(const std::vector<Particle>& particles)
+{
+    double avg_x = 0;
+    double avg_y = 0;
+    double theta_x = 0;
+    double theta_y = 0;
+    for (const Particle& particle : particles)
+    {
+        avg_x += particle.pose.x;
+        avg_y += particle.pose.y;
+        theta_x += std::cos(particle.pose.theta);
+        theta_y += std::sin(particle.pose.theta);
+    }
+
+    avg_x /= particles.size();
+    avg_y /= particles.size();
+    const double avg_theta = std::atan2(theta_y, theta_x);
+
+    return {avg_x, avg_y, avg_theta};
+}
+
 }  // namespace slam

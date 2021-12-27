@@ -4,6 +4,7 @@
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <tuple>
+#include <vector>
 
 #include "pose.h"
 
@@ -15,6 +16,7 @@ double pdf_triangular_distribution(double stddev, double x);
 double sample_normal_distribution(double stddev);
 double sample_triangular_distribution(double stddev);
 double normalize_angle(double angle);
+Pose average_pose(const std::vector<Particle>& particles);
 
 struct Coordinate
 {
