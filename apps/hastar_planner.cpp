@@ -1,11 +1,10 @@
-#include "hastar.h"
-#include "colors.h"
-#include "thirdparty/log.h"
-
 #include <cmath>
 #include <string>
 
+#include "colors.h"
+#include "hastar.h"
 #include "opencv2/opencv.hpp"
+#include "thirdparty/log.h"
 
 static cv::Mat map;
 static cv::Mat map_;

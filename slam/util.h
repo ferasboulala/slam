@@ -1,12 +1,11 @@
 #pragma once
 
-#include "pose.h"
-
-#include <opencv2/opencv.hpp>
-
 #include <array>
 #include <cmath>
+#include <opencv2/opencv.hpp>
 #include <tuple>
+
+#include "pose.h"
 
 namespace slam
 {
@@ -56,7 +55,9 @@ inline bool within_bounding_box(const Coordinate& point, const Coordinate& start
     return point.i >= start.i && point.i <= stop.i && point.j >= start.j && point.j <= stop.j;
 }
 
-inline bool bounding_boxes_intersect(const Coordinate& a_start, const Coordinate& a_stop, const Coordinate& b_start,
+inline bool bounding_boxes_intersect(const Coordinate& a_start,
+                                     const Coordinate& a_stop,
+                                     const Coordinate& b_start,
                                      const Coordinate& b_stop)
 {
     return !(a_stop.i < b_start.i || a_start.i > b_stop.i || a_stop.j < b_start.j || a_start.j > b_stop.j);
@@ -68,18 +69,22 @@ Coordinate random_point(const cv::Mat& map);
 
 inline std::array<Coordinate, 8> adjacency_8(const Coordinate& X)
 {
-    const std::array<Coordinate, 8> neighbourhood = {Coordinate{X.i + 1, X.j + 1}, Coordinate{X.i + 1, X.j - 1},
-                                                     Coordinate{X.i - 1, X.j + 1}, Coordinate{X.i - 1, X.j - 1},
-                                                     Coordinate{X.i + 1, X.j},     Coordinate{X.i, X.j + 1},
-                                                     Coordinate{X.i - 1, X.j},     Coordinate{X.i, X.j - 1}};
+    const std::array<Coordinate, 8> neighbourhood = {Coordinate{X.i + 1, X.j + 1},
+                                                     Coordinate{X.i + 1, X.j - 1},
+                                                     Coordinate{X.i - 1, X.j + 1},
+                                                     Coordinate{X.i - 1, X.j - 1},
+                                                     Coordinate{X.i + 1, X.j},
+                                                     Coordinate{X.i, X.j + 1},
+                                                     Coordinate{X.i - 1, X.j},
+                                                     Coordinate{X.i, X.j - 1}};
 
     return neighbourhood;
 }
 
 inline std::array<Coordinate, 4> adjacency_4(const Coordinate& X)
 {
-    const std::array<Coordinate, 4> neighbourhood = {Coordinate{X.i + 1, X.j}, Coordinate{X.i, X.j + 1},
-                                                     Coordinate{X.i - 1, X.j}, Coordinate{X.i, X.j - 1}};
+    const std::array<Coordinate, 4> neighbourhood = {
+        Coordinate{X.i + 1, X.j}, Coordinate{X.i, X.j + 1}, Coordinate{X.i - 1, X.j}, Coordinate{X.i, X.j - 1}};
 
     return neighbourhood;
 }

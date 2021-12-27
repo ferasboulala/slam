@@ -1,8 +1,9 @@
 #include "quadtree.h"
-#include "colors.h"
 
 #include <array>
 #include <cassert>
+
+#include "colors.h"
 
 namespace slam
 {
@@ -86,8 +87,11 @@ void QuadTree::add(const Coordinate& point, void* data)
 }
 
 #include "thirdparty/log.h"
-void QuadTree::range_query_helper(const Node* root, const Coordinate& start, const Coordinate& stop,
-                                  std::vector<std::tuple<Coordinate, void*>>& result, const Coordinate& node_start,
+void QuadTree::range_query_helper(const Node* root,
+                                  const Coordinate& start,
+                                  const Coordinate& stop,
+                                  std::vector<std::tuple<Coordinate, void*>>& result,
+                                  const Coordinate& node_start,
                                   const Coordinate& node_stop)
 {
     if (root == nullptr) return;
@@ -121,7 +125,11 @@ std::vector<std::tuple<Coordinate, void*>> QuadTree::range_query(const Coordinat
 {
     std::vector<std::tuple<Coordinate, void*>> result;
 
-    range_query_helper(m_root, upper_left, bottom_right, result, {0, 0},
+    range_query_helper(m_root,
+                       upper_left,
+                       bottom_right,
+                       result,
+                       {0, 0},
                        {std::numeric_limits<int>::max(), std::numeric_limits<int>::max()});
 
     return result;

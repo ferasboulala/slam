@@ -1,13 +1,22 @@
 #include "hastar.h"
-#include "colors.h"
-#include "raycast.h"
 
 #include <cmath>
 
+#include "colors.h"
+#include "raycast.h"
+
 namespace slam
 {
-HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length,
-                         unsigned theta_res, int branching_factor, double tol, bool diff_drive)
+HybridAStar::HybridAStar(cv::Mat& map,
+                         const Pose& A,
+                         const Pose& B,
+                         double v,
+                         double theta,
+                         double length,
+                         unsigned theta_res,
+                         int branching_factor,
+                         double tol,
+                         bool diff_drive)
     : m_success(false),
       m_used_up(false),
       m_A(A),
@@ -20,8 +29,10 @@ HybridAStar::HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, d
       m_tol(tol),
       m_diff_drive(diff_drive)
 {
-    m_costs = Cuboid(map.rows, Grid(map.cols, std::vector<std::pair<double, CuboidIndex>>(
-                                                  theta_res, {std::numeric_limits<double>::max(), {-1, -1, -1}})));
+    m_costs = Cuboid(map.rows,
+                     Grid(map.cols,
+                          std::vector<std::pair<double, CuboidIndex>>(
+                              theta_res, {std::numeric_limits<double>::max(), {-1, -1, -1}})));
 
     m_target = pose_to_cuboid_index(B);
 

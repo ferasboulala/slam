@@ -1,14 +1,13 @@
+#include <cmath>
+#include <opencv2/opencv.hpp>
+
 #include "colors.h"
-#include "lidar.h"
+#include "fake_lidar.h"
 #include "mcl.h"
 #include "motion.h"
 #include "pose.h"
 #include "thirdparty/log.h"
 #include "util.h"
-
-#include <opencv2/opencv.hpp>
-
-#include <cmath>
 
 enum class Key : int
 {
@@ -78,8 +77,8 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
 
-    slam::Lidar lidar(0, 2 * M_PI, 500, 1, 90);
-    slam::MCL mcl(lidar, 25, {0.0005, 0.0005, 0.01, 0.01});
+    slam::FakeLidar fake_lidar(0, 2 * M_PI, 500, 1, 90);
+    slam::MCL mcl(25);
     slam::Pose real_position{400, 400, M_PI};
 
     // This is the image that is displayed every frame
@@ -89,10 +88,10 @@ int main(int argc, char** argv)
     int frame = 0;
     while (true)
     {
-        map_image_frame = mcl.particles.front().map.clone();
+        map_image_frame = mcl.get_particles().front().map.clone();
         map_image_frame.convertTo(map_image_frame, CV_32FC3);
         cv::cvtColor(map_image_frame, map_image_frame, cv::COLOR_GRAY2RGB);
-        for (const slam::Particle& particle : mcl.particles)
+        for (const slam::Particle& particle : mcl.get_particles())
         {
             draw_particle(map_image_frame, particle.pose, GREEN, 5, true);
         }
@@ -100,17 +99,21 @@ int main(int argc, char** argv)
 
         const int key = cv::waitKey(WAIT_TIME);
         const slam::Odometry odom = getUserInput(key);
-        mcl.predict(odom);
+        mcl.predict(odom, {0.0005, 0.0005, 0.01, 0.01});
 
         // Use 0s for alphas meaning no error in the motion
         real_position = slam::sample_motion_model_odometry(odom, real_position);
 
-        // make this a function
+        // TODO: make this a function
         if (++frame % EVERY_OTHER == 0)
         {
-            const std::vector<slam::Pose> hits = lidar.scan(map, real_position);
-            std::vector<double> distances;
-            distances.reserve(hits.size());
+            const std::vector<slam::Pose> hits = fake_lidar.scan(map, real_position);
+            std::vector<std::tuple<double, double>> scans;
+            scans.reserve(hits.size());
+            constexpr double range = 2 * M_PI;
+            const unsigned n_rays = 90;
+            constexpr double step = range / n_rays;
+            int i = 0;
             for (const slam::Pose& hit : hits)
             {
                 double dist;
@@ -120,12 +123,15 @@ int main(int argc, char** argv)
                 }
                 else
                 {
-                    dist = lidar.max_dist;
+                    dist = fake_lidar.max_dist;
                 }
-                distances.push_back(dist);
+                const double angle = i++ * step - range / 2;
+                scans.push_back({angle, dist});
             }
 
-            mcl.update(distances);
+            constexpr double stddev = 1;
+            constexpr double max_dist = 500;
+            mcl.update(scans, stddev, max_dist);
         }
     }
 

@@ -1,17 +1,18 @@
-#include "lidar.h"
-#include "raycast.h"
-#include "util.h"
+#include "fake_lidar.h"
 
 #include <cmath>
 
+#include "raycast.h"
+#include "util.h"
+
 namespace slam
 {
-Lidar::Lidar(double start, double stop, double max_dist, double stddev, int n_rays)
+FakeLidar::FakeLidar(double start, double stop, double max_dist, double stddev, int n_rays)
     : start(start), stop(stop), max_dist(max_dist), stddev(stddev), n_rays(n_rays)
 {
 }
 
-std::vector<Pose> Lidar::scan(const cv::Mat& map, const Pose& pose) const
+std::vector<Pose> FakeLidar::scan(const cv::Mat& map, const Pose& pose) const
 {
     const double range = stop - start;
     const double step = range / n_rays;

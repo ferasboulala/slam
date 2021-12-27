@@ -1,10 +1,10 @@
 #include "kdtree.h"
 
-#include "colors.h"
-#include "util.h"
-
 #include <cassert>
 #include <vector>
+
+#include "colors.h"
+#include "util.h"
 
 namespace slam
 {
@@ -211,4 +211,4 @@ static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i, int st
 }
 
 void KDTree::draw(cv::Mat& canvas) const { draw_helper(canvas, m_root, 0, canvas.rows, 0, canvas.cols); }
-}  // namespace sla
+}  // namespace slam

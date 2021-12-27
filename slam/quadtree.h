@@ -1,9 +1,9 @@
 #pragma once
 
-#include "util.h"
-
 #include <tuple>
 #include <vector>
+
+#include "util.h"
 
 namespace slam
 {
@@ -39,8 +39,11 @@ private:
     static inline std::array<std::pair<Coordinate, Coordinate>, 4> regions(const Coordinate& point,
                                                                            const Coordinate& start,
                                                                            const Coordinate& stop);
-    static void range_query_helper(const Node* root, const Coordinate& start, const Coordinate& stop,
-                                   std::vector<std::tuple<Coordinate, void*>>& result, const Coordinate& node_start,
+    static void range_query_helper(const Node* root,
+                                   const Coordinate& start,
+                                   const Coordinate& stop,
+                                   std::vector<std::tuple<Coordinate, void*>>& result,
+                                   const Coordinate& node_start,
                                    const Coordinate& node_stop);
 
 private:

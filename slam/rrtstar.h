@@ -1,12 +1,11 @@
 #pragma once
 
+#include <opencv2/opencv.hpp>
+#include <tuple>
+
 #include "kdtree.h"
 #include "quadtree.h"
 #include "util.h"
-
-#include <opencv2/opencv.hpp>
-
-#include <tuple>
 
 namespace slam
 {
@@ -36,6 +35,7 @@ public:
     std::vector<Coordinate> recover_path();
 
     unsigned size() const { return m_nodes.size(); };
+
 private:
     Node* can_reach(const Coordinate& root_point, const Coordinate& new_point) const;
 

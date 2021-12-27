@@ -1,7 +1,8 @@
 #include "motion.h"
-#include "util.h"
 
 #include <cmath>
+
+#include "util.h"
 
 namespace slam
 {

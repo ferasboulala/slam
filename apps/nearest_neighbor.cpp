@@ -1,12 +1,11 @@
+#include <limits>
+#include <opencv2/opencv.hpp>
+#include <random>
+
 #include "colors.h"
 #include "kdtree.h"
 #include "thirdparty/log.h"
 #include "util.h"
-
-#include <opencv2/opencv.hpp>
-
-#include <limits>
-#include <random>
 
 #define KDTREE  // Comment to use linear search
 #define DRAW    // Comment to get rid of boundaries
@@ -46,7 +45,7 @@ int main(int argc, char** argv)
 {
     if (argc != 3)
     {
-        log_error("Usage : %s number_of_points", argv[0]);
+        log_error("Usage : %s image number_of_points", argv[0]);
         return -1;
     }
 

@@ -1,12 +1,11 @@
+#include <limits>
+#include <opencv2/opencv.hpp>
+#include <random>
+
 #include "colors.h"
 #include "quadtree.h"
 #include "thirdparty/log.h"
 #include "util.h"
-
-#include <opencv2/opencv.hpp>
-
-#include <limits>
-#include <random>
 
 //#define DRAW    // Comment to get rid of boundaries
 

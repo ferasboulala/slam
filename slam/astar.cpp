@@ -1,13 +1,12 @@
 #include "astar.h"
 
-#include "colors.h"
-#include "thirdparty/log.h"
-
 #include <algorithm>
 #include <cmath>
 #include <limits>
-
 #include <opencv2/opencv.hpp>
+
+#include "colors.h"
+#include "thirdparty/log.h"
 
 namespace slam
 {
@@ -130,4 +129,4 @@ std::vector<Coordinate> AStar::recover_path()
 
     return path;
 }
-}
+}  // namespace slam

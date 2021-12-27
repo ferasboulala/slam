@@ -1,27 +1,36 @@
 #pragma once
 
-#include "pose.h"
-#include "thirdparty/log.h"
-#include "util.h"
-
 #include <array>
 #include <functional>
 #include <limits>
 #include <vector>
+
+#include "pose.h"
+#include "thirdparty/log.h"
+#include "util.h"
 
 namespace slam
 {
 class HybridAStar
 {
 public:
-    HybridAStar(cv::Mat& map, const Pose& A, const Pose& B, double v, double theta, double length, unsigned theta_res,
-                int branching_factor, double tol, bool m_diff_drive = true);
+    HybridAStar(cv::Mat& map,
+                const Pose& A,
+                const Pose& B,
+                double v,
+                double theta,
+                double length,
+                unsigned theta_res,
+                int branching_factor,
+                double tol,
+                bool m_diff_drive = true);
 
     ~HybridAStar() = default;
 
     bool pathfind(cv::Mat* canvas);
     std::vector<Coordinate> recover_path();
     unsigned size() const { return m_size; }
+
 private:
     struct CuboidIndex
     {

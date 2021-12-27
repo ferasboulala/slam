@@ -1,18 +1,17 @@
 #pragma once
 
-#include "pose.h"
-
 #include <opencv2/opencv.hpp>
-
 #include <vector>
+
+#include "pose.h"
 
 namespace slam
 {
-class Lidar
+class FakeLidar
 {
 public:
-    Lidar(double start, double stop, double max_dist, double stddev, int n_rays);
-    ~Lidar() = default;
+    FakeLidar(double start, double stop, double max_dist, double stddev, int n_rays);
+    ~FakeLidar() = default;
 
     std::vector<Pose> scan(const cv::Mat& map, const Pose& pose) const;
 

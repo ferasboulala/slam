@@ -1,10 +1,9 @@
 #pragma once
 
-#include "util.h"
-
 #include <functional>
-
 #include <opencv2/opencv.hpp>
+
+#include "util.h"
 
 namespace slam
 {
@@ -28,6 +27,7 @@ public:
     std::vector<Coordinate> recover_path();
 
     unsigned size() const { return m_size; }
+
 private:
     bool m_success;
     bool m_used_up;

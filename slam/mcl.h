@@ -1,25 +1,28 @@
 #pragma once
 
-#include "lidar.h"
-#include "pose.h"
-
-#include <opencv2/opencv.hpp>
-
 #include <array>
+#include <opencv2/opencv.hpp>
+#include <tuple>
 #include <vector>
+
+#include "pose.h"
 
 namespace slam
 {
 class MCL
 {
 public:
-    MCL(const Lidar& lidar, int n_particles, const std::array<double, 4> alphas);
+    MCL(int n_particles);
     ~MCL() = default;
 
-    void predict(const Odometry& odom);
-    void update(const std::vector<double>& scans);
+    void predict(const Odometry& odom, const std::array<double, 4>& alphas);
+    void update(const std::vector<std::tuple<double, double>>& scans,
+                double stddev,
+                double max_dist,
+                int n_threads = -1);
 
     Pose average_pose() const;
+    const std::vector<Particle>& get_particles() const { return m_particles; }
 
 private:
     // Creates random particles.
@@ -32,14 +35,10 @@ private:
     std::vector<Particle> fitness_selection(int n);
     std::vector<Particle> probabilistic_fitness_selection(int n);
 
-    void update_inner(const std::vector<double>& scans, int start, int n);
+    void update_inner(
+        const std::vector<std::tuple<double, double>>& scans, double stddev, double max_dist, int start, int n);
 
-public:
-    std::vector<Particle> particles;
-    const Lidar& lidar;
-
-private:
-    std::array<double, 4> m_alphas;
+    std::vector<Particle> m_particles;
 };
 
 }  // namespace slam

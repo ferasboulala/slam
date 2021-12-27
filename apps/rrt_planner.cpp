@@ -1,10 +1,9 @@
-#include "colors.h"
-#include "rrtstar.h"
-#include "thirdparty/log.h"
-
 #include <string>
 
+#include "colors.h"
 #include "opencv2/opencv.hpp"
+#include "rrtstar.h"
+#include "thirdparty/log.h"
 
 static cv::Mat map;
 static cv::Mat map_;

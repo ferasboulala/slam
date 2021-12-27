@@ -1,10 +1,11 @@
 #include "rrtstar.h"
-#include "colors.h"
-#include "raycast.h"
-#include "thirdparty/log.h"
 
 #include <cmath>
 #include <limits>
+
+#include "colors.h"
+#include "raycast.h"
+#include "thirdparty/log.h"
 
 static constexpr unsigned MAX_N_NODES = 1e9 / sizeof(slam::RRTStar::Node);  // 1 megabyte
 
@@ -96,8 +97,11 @@ bool RRTStar::pathfind(cv::Mat *canvas)
 
         if (canvas != nullptr)
         {
-            cv::line(*canvas, {new_node->point.j, new_node->point.i},
-                     {new_node->parent->point.j, new_node->parent->point.i}, BLUE, 1);
+            cv::line(*canvas,
+                     {new_node->point.j, new_node->point.i},
+                     {new_node->parent->point.j, new_node->parent->point.i},
+                     BLUE,
+                     1);
             cv::circle(*canvas, {new_node->point.j, new_node->point.i}, 2, RED, cv::FILLED);
         }
 
@@ -116,8 +120,8 @@ bool RRTStar::pathfind(cv::Mat *canvas)
             root->cost = new_node->cost + dist;
             if (canvas != nullptr)
             {
-                cv::line(*canvas, {root->parent->point.j, root->parent->point.i}, {root->point.j, root->point.i}, WHITE,
-                         1);
+                cv::line(
+                    *canvas, {root->parent->point.j, root->parent->point.i}, {root->point.j, root->point.i}, WHITE, 1);
                 cv::line(*canvas, {new_node->point.j, new_node->point.i}, {root->point.j, root->point.i}, BLUE, 1);
             }
             root->parent = new_node;
