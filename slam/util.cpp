@@ -1,7 +1,5 @@
 #include "util.h"
 
-#include <thirdparty/log.h>
-
 #include <chrono>
 #include <cmath>
 #include <random>
