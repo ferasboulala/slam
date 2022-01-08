@@ -42,17 +42,28 @@ void MCL::predict(const Odometry& odom, const std::array<double, 4>& alphas)
     }
 }
 
-void MCL::update_inner(
-    const std::vector<std::tuple<double, double>>& scans, double stddev, double max_dist, int start, int n)
+void MCL::update_inner(const std::vector<std::tuple<double, double>>& scan,
+                       double stddev,
+                       double max_dist,
+                       int start,
+                       int n,
+                       const std::tuple<double, double, double>& scanner_offset)
 {
+    const auto& [scanner_d, scanner_theta, scanner_rot] = scanner_offset;
     for (int i = 0; i < n; ++i)
     {
         Particle& particle = m_particles[i + start];
-        double weight = 0;
+        const double dx = std::cos(particle.pose.theta + scanner_theta) * scanner_d;
+        const double dy = std::sin(particle.pose.theta + scanner_theta) * scanner_d;
         const Pose pose = particle.pose;
-        for (const auto& [angle, dist] : scans)
+
+        // w.r.t the sensor frame
+        particle.pose.x += dx;
+        particle.pose.y += dy;
+        double weight = 0;
+        for (const auto& [angle, dist] : scan)
         {
-            particle.pose.theta = pose.theta + angle;
+            particle.pose.theta = pose.theta + angle + scanner_rot;
             double w = measurement_model_beam(dist, stddev, particle, max_dist);
             weight += std::log(w);
         }
@@ -61,7 +72,33 @@ void MCL::update_inner(
     }
 }
 
-void MCL::update(const std::vector<std::tuple<double, double>>& scans, double stddev, double max_dist, int n_threads)
+static inline std::pair<double, double> scanner_offset_to_displacement(const Pose& scanner_offset)
+{
+    const double d = euclidean_distance({0, 0, 0}, scanner_offset);
+    const double theta = std::atan2(scanner_offset.y, scanner_offset.x);
+
+    return {d, theta};
+}
+
+Pose MCL::sensor_position(const Pose& frame_position, const Pose& scanner_offset)
+{
+    const auto [scanner_d, scanner_theta] = scanner_offset_to_displacement(scanner_offset);
+    const double dx = std::cos(frame_position.theta + scanner_theta) * scanner_d;
+    const double dy = std::sin(frame_position.theta + scanner_theta) * scanner_d;
+
+    Pose ret = frame_position;
+    ret.x += dx;
+    ret.y += dy;
+    ret.theta += scanner_offset.theta;
+
+    return ret;
+}
+
+void MCL::update(const std::vector<std::tuple<double, double>>& scan,
+                 double stddev,
+                 double max_dist,
+                 const Pose& scanner_offset,
+                 int n_threads)
 {
     if (n_threads == -1)
     {
@@ -71,6 +108,9 @@ void MCL::update(const std::vector<std::tuple<double, double>>& scans, double st
     {
         n_threads = std::min(static_cast<unsigned>(n_threads), std::thread::hardware_concurrency());
     }
+    assert(n_threads);
+
+    const auto [scanner_d, scanner_theta] = scanner_offset_to_displacement(scanner_offset);
 
     std::vector<std::thread> threads(n_threads);
     const int number_particles_per_thread = m_particles.size() / threads.size();
@@ -80,7 +120,14 @@ void MCL::update(const std::vector<std::tuple<double, double>>& scans, double st
         int n = number_particles_per_thread;
         if (i == threads.size() - 1) n += m_particles.size() % threads.size();
 
-        threads[i] = std::thread(&MCL::update_inner, this, scans, stddev, max_dist, start, n);
+        threads[i] = std::thread(&MCL::update_inner,
+                                 this,
+                                 scan,
+                                 stddev,
+                                 max_dist,
+                                 start,
+                                 n,
+                                 std::tuple<double, double, double>{scanner_d, scanner_theta, scanner_offset.theta});
     }
 
     for (std::thread& thread : threads)

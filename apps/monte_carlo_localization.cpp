@@ -77,7 +77,8 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
 
-    slam::FakeLidar fake_lidar(0, 2 * M_PI, 500, 1, 90);
+    slam::FakeLidar fake_lidar(0, M_PI, 500, 1, 90);
+    constexpr slam::Pose scanner_offset = {0, 30, 0};
     slam::MCL mcl(25);
     slam::Pose real_position{400, 400, M_PI};
 
@@ -107,19 +108,20 @@ int main(int argc, char** argv)
         // TODO: make this a function
         if (++frame % EVERY_OTHER == 0)
         {
-            const std::vector<slam::Pose> hits = fake_lidar.scan(map, real_position);
+            const slam::Pose sensor_position = slam::MCL::sensor_position(real_position, scanner_offset);
+            const std::vector<slam::Pose> hits = fake_lidar.scan(map, sensor_position);
             std::vector<std::tuple<double, double>> scans;
             scans.reserve(hits.size());
-            constexpr double range = 2 * M_PI;
+            const double range = fake_lidar.stop - fake_lidar.start;
             const unsigned n_rays = 90;
-            constexpr double step = range / n_rays;
+            const double step = range / n_rays;
             int i = 0;
             for (const slam::Pose& hit : hits)
             {
                 double dist;
                 if (hit.x != -1)
                 {
-                    dist = std::sqrt(std::pow(hit.y - real_position.y, 2) + std::pow(hit.x - real_position.x, 2));
+                    dist = std::sqrt(std::pow(hit.y - sensor_position.y, 2) + std::pow(hit.x - sensor_position.x, 2));
                 }
                 else
                 {
@@ -131,7 +133,7 @@ int main(int argc, char** argv)
 
             constexpr double stddev = 1;
             constexpr double max_dist = 500;
-            mcl.update(scans, stddev, max_dist);
+            mcl.update(scans, stddev, max_dist, scanner_offset);
         }
     }
 
