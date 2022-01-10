@@ -1,46 +1,57 @@
 cmake_minimum_required(VERSION 2.8.17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -std=gnu++17 -Werror -Wall -Wextra -Wformat=0 -Werror=vla -finline-functions -fno-math-errno -Ofast")
+project(slam)
+
+add_compile_options(-Ofast -fno-math-errno -finline-functions -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17) #-Werror)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ALL_LIBRARIES)
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin/")
 
-project(slam)
 
-
-# Packages
 find_package(Threads REQUIRED)
-find_package(GTest REQUIRED)
 find_package(OpenCV REQUIRED)
 
-# Include directories and src files
-include_directories("${PROJECT_SOURCE_DIR}/slam")
-include_directories(${GTEST_INCLUDE_DIRS})
-include_directories(${OpenCV_INCLUDE_DIRS})
-file(GLOB PROJECT_SOURCES
-    "${PROJECT_SOURCE_DIR}/slam/*.cpp"
-    "${PROJECT_SOURCE_DIR}/slam/mapping/*.cpp"
-    "${PROJECT_SOURCE_DIR}/slam/planning/*.cpp"
-    "${PROJECT_SOURCE_DIR}/slam/thirdparty/*.cpp"
+
+add_library(slam STATIC
+	slam/astar.cpp
+	slam/astar.h
+	slam/colors.h
+	slam/fake_lidar.cpp
+	slam/fake_lidar.h
+	slam/hastar.cpp
+	slam/hastar.h
+	slam/kdtree.cpp
+	slam/kdtree.h
+	slam/mcl.cpp
+	slam/mcl.h
+	slam/motion.cpp
+	slam/motion.h
+	slam/pose.h
+	slam/quadtree.cpp
+	slam/quadtree.h
+	slam/raycast.cpp
+	slam/raycast.h
+	slam/rrtstar.cpp
+	slam/rrtstar.h
+	slam/thirdparty
+	slam/util.cpp
+	slam/util.h
+	slam/thirdparty/log.h
+	slam/thirdparty/log.cpp
 )
+target_include_directories(slam PRIVATE slam ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(slam ${OpenCV_LIBRARIES} -pthread)
 
 
-# Tests
-enable_testing()
-macro(unit_test test_name test_source)
-    add_executable(${test_name} ${test_source} ${PROJECT_SOURCES})
-    add_test(${test_name} ${CMAKE_CURRENT_SOURCE_DIR}/bin/${test_name})
-    target_link_libraries(${test_name} -pthread ${GTEST_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -pthread)
-endmacro()
-
-# Apps and libraries
 macro(app progname source)
     add_executable(${progname} ${source} ${PROJECT_SOURCES})
-    target_link_libraries(${progname} ${GTEST_LIBRARIES} ${OpenCV_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -pthread)
+	target_include_directories(${progname} PRIVATE ${OpenCV_INCLUDE_DIRS} slam)
+    target_link_libraries(${progname} ${OpenCV_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -pthread slam)
 endmacro()
 
-app("monte_carlo_localization" "apps/monte_carlo_localization.cpp")
+
+app("grid_slam" "apps/monte_carlo_localization.cpp")
 app("rrt_planner" "apps/rrt_planner.cpp")
 app("hastar_planner" "apps/hastar_planner.cpp")
 app("nearest_neighbor" "apps/nearest_neighbor.cpp")

@@ -11,11 +11,9 @@
 #include "raycast.h"
 #include "util.h"
 
-constexpr int CANVAS_SIZE = 1000;
-
 namespace slam
 {
-MCL::MCL(int n_particles)
+MCL::MCL(int n_particles, const cv::Size& canvas_size) : m_canvas_size(canvas_size)
 {
     m_particles.resize(n_particles);
     reset_particles();
@@ -23,9 +21,9 @@ MCL::MCL(int n_particles)
 
 void MCL::reset_particles()
 {
-    const auto blank_canvas = cv::Mat(cv::Size(CANVAS_SIZE, CANVAS_SIZE), CV_64F, cv::Scalar(0.5));
+    const auto blank_canvas = cv::Mat(m_canvas_size, CV_64F, cv::Scalar(0.5));
     const double uniform_weight = 1.0 / m_particles.size();
-    const Pose center{0.5 * CANVAS_SIZE, 0.5 * CANVAS_SIZE, M_PI / 2};
+    const Pose center{0.5 * m_canvas_size.height, 0.5 * m_canvas_size.width, M_PI / 2};
     for (Particle& particle : m_particles)
     {
         particle.weight = uniform_weight;

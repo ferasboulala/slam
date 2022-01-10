@@ -12,7 +12,7 @@ namespace slam
 class MCL
 {
 public:
-    MCL(int n_particles);
+    MCL(int n_particles, const cv::Size& canvas_size = {1000, 1000});
     ~MCL() = default;
 
     void predict(const Odometry& odom, const std::array<double, 4>& alphas);
@@ -42,6 +42,7 @@ private:
                       const std::tuple<double, double, double>& scanner_offset);
 
     std::vector<Particle> m_particles;
+    cv::Size m_canvas_size;
 };
 
 }  // namespace slam
