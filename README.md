@@ -1,6 +1,8 @@
 # slam
 
-Grid slam with path finding algorithms. Based on MCL and grid slam from Sebastian Thrun's book.
+Grid slam with path finding algorithms. Based on MCL and grid slam from Sebastian Thrun's book. The
+algorithm can be used in a real world scenario because of the error model and sensor displacement
+support. Only differential drive robots are supported.
 
 
 ## Samples
