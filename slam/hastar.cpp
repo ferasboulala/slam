@@ -187,4 +187,4 @@ HybridAStar::CuboidIndex HybridAStar::pose_to_cuboid_index(const Pose& pose) con
     return {coord.i, coord.j, angle_index};
 }
 
-};  // namespace slam
+}  // namespace slam

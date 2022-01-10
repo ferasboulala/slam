@@ -73,13 +73,21 @@ int main(int argc, char** argv)
     }
 
     cv::Mat map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
-    // Ends up as a binary image
+    // Binary image
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
 
-    slam::FakeLidar fake_lidar(0, M_PI, 500, 1, 90);
-    constexpr slam::Pose scanner_offset = {0, 30, 0};
-    slam::MCL mcl(25);
+    constexpr double FAKE_LIDAR_STDDEV = 5;
+    constexpr double FAKE_LIDAR_MAX_DIST = 500;
+    constexpr double FAKE_LIDAR_START_ANGLE = 0;
+    constexpr double FAKE_LIDAR_STOP_ANGLE = M_PI;
+    slam::FakeLidar fake_lidar(
+        FAKE_LIDAR_START_ANGLE, FAKE_LIDAR_STOP_ANGLE, FAKE_LIDAR_MAX_DIST, FAKE_LIDAR_STDDEV, 90);
+
+    constexpr slam::Pose SCANNER_OFFSET = {0, 30, 0};
+    constexpr unsigned N_PARTICLES = 25;
+    slam::MCL mcl(N_PARTICLES, {1600, 900});
+
     slam::Pose real_position{400, 400, M_PI};
 
     // This is the image that is displayed every frame
@@ -96,6 +104,11 @@ int main(int argc, char** argv)
         {
             draw_particle(map_image_frame, particle.pose, GREEN, 5, true);
         }
+
+        const slam::Pose& average_pose = slam::average_pose(mcl.get_particles());
+        draw_particle(map_image_frame, average_pose, RED, 5, true);
+        draw_particle(map_image_frame, slam::MCL::sensor_position(average_pose, SCANNER_OFFSET), RED, 3, true);
+
         cv::imshow("slam", map_image_frame);
 
         const int key = cv::waitKey(WAIT_TIME);
@@ -105,16 +118,14 @@ int main(int argc, char** argv)
         // Use 0s for alphas meaning no error in the motion
         real_position = slam::sample_motion_model_odometry(odom, real_position);
 
-        // TODO: make this a function
         if (++frame % EVERY_OTHER == 0)
         {
-            const slam::Pose sensor_position = slam::MCL::sensor_position(real_position, scanner_offset);
+            const slam::Pose sensor_position = slam::MCL::sensor_position(real_position, SCANNER_OFFSET);
             const std::vector<slam::Pose> hits = fake_lidar.scan(map, sensor_position);
             std::vector<std::tuple<double, double>> scans;
             scans.reserve(hits.size());
             const double range = fake_lidar.stop - fake_lidar.start;
-            const unsigned n_rays = 90;
-            const double step = range / n_rays;
+            const double step = range / fake_lidar.n_rays;
             int i = 0;
             for (const slam::Pose& hit : hits)
             {
@@ -131,9 +142,7 @@ int main(int argc, char** argv)
                 scans.push_back({angle, dist});
             }
 
-            constexpr double stddev = 1;
-            constexpr double max_dist = 500;
-            mcl.update(scans, stddev, max_dist, scanner_offset);
+            mcl.update(scans, FAKE_LIDAR_STDDEV, fake_lidar.max_dist, SCANNER_OFFSET);
         }
     }
 

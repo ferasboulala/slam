@@ -65,7 +65,7 @@ inline bool bounding_boxes_intersect(const Coordinate& a_start,
     return !(a_stop.i < b_start.i || a_start.i > b_stop.i || a_stop.j < b_start.j || a_start.j > b_stop.j);
 }
 
-inline double log_odds(double p) { return std::log(p / (1 - p)); };
+inline double log_odds(double p) { return std::log(p / (1 - p)); }
 inline double log_odds_inv(double l) { return 1 - (1.0 / (1 + std::exp(l))); }
 Coordinate random_point(const cv::Mat& map);
 

@@ -23,7 +23,7 @@ void MCL::reset_particles()
 {
     const auto blank_canvas = cv::Mat(m_canvas_size, CV_64F, cv::Scalar(0.5));
     const double uniform_weight = 1.0 / m_particles.size();
-    const Pose center{0.5 * m_canvas_size.height, 0.5 * m_canvas_size.width, M_PI / 2};
+    const Pose center{0.5 * m_canvas_size.width, 0.5 * m_canvas_size.height, M_PI / 2};
     for (Particle& particle : m_particles)
     {
         particle.weight = uniform_weight;
