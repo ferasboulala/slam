@@ -15,6 +15,7 @@ public:
     MCL(int n_particles, const cv::Size& canvas_size = {1000, 1000});
     ~MCL() = default;
 
+    Pose starting_pose() const;
     void predict(const Odometry& odom, const std::array<double, 4>& alphas);
     void update(const std::vector<std::tuple<double, double>>& scan,
                 double stddev,
