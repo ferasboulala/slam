@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.17)
 
 project(slam)
 
-add_compile_options(-Ofast -fno-math-errno -finline-functions -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17) #-Werror)
+add_compile_options(-Ofast -g -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17) #-Werror)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ALL_LIBRARIES)
 set(CMAKE_BUILD_TYPE Release)
@@ -11,6 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin/")
 
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(benchmark REQUIRED)
 
 
 add_library(slam STATIC
@@ -47,7 +48,8 @@ target_link_libraries(slam ${OpenCV_LIBRARIES} -pthread)
 macro(app progname source)
     add_executable(${progname} ${source} ${PROJECT_SOURCES})
 	target_include_directories(${progname} PRIVATE ${OpenCV_INCLUDE_DIRS} slam)
-    target_link_libraries(${progname} ${OpenCV_LIBRARIES} -lopencv_core -lopencv_highgui -lopencv_imgproc -pthread slam)
+    target_link_libraries(${progname} ${OpenCV_LIBRARIES} -lopencv_core -lopencv_highgui
+        -lopencv_imgproc -pthread slam benchmark::benchmark)
 endmacro()
 
 
@@ -56,3 +58,5 @@ app("rrt_planner" "apps/rrt_planner.cpp")
 app("hastar_planner" "apps/hastar_planner.cpp")
 app("nearest_neighbor" "apps/nearest_neighbor.cpp")
 app("regions" "apps/regions.cpp")
+
+app("benchmark_hastar" "benchmark/hastar.cpp")
