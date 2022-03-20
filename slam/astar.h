@@ -41,7 +41,9 @@ private:
     std::vector<std::tuple<Coordinate, double>> m_q;
 
     std::function<double(const Coordinate& X)> m_heuristic;
-    std::function<bool(const std::tuple<Coordinate, double>& X, const std::tuple<Coordinate, double>& Y)> m_comp;
+    std::function<bool(const std::tuple<Coordinate, double>& X,
+                       const std::tuple<Coordinate, double>& Y)>
+        m_comp;
     unsigned m_size;
 };
 

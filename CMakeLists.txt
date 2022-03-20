@@ -60,3 +60,4 @@ app("nearest_neighbor" "apps/nearest_neighbor.cpp")
 app("regions" "apps/regions.cpp")
 
 app("benchmark_hastar" "benchmark/hastar.cpp")
+app("benchmark_rrtstar" "benchmark/rrtstar.cpp")

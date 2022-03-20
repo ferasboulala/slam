@@ -22,9 +22,10 @@ std::vector<Pose> FakeLidar::scan(const cv::Mat& map, const Pose& pose) const
 
     Pose raycast_pose = pose;
     raycast_pose.theta -= range / 2;
+    const double max_dist_squared = max_dist * max_dist;
     for (int i = 0; i < n_rays; ++i)
     {
-        scans.push_back(raycast<int>(map, raycast_pose, max_dist));
+        scans.push_back(raycast<int>(map, raycast_pose, max_dist_squared));
         raycast_pose.theta += step;
     }
 

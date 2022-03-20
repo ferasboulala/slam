@@ -63,8 +63,13 @@ void mouse_callback(int event, int x, int y, int, void*)
             real_stop.i = start.i;
         }
 
-        log_info("Querying for (%d, %d), (%d, %d)", real_start.i, real_start.j, real_stop.i, real_stop.j);
-        cv::rectangle(map_image_frame, {real_start.j, real_start.i}, {real_stop.j, real_stop.i}, GREY, 2);
+        log_info("Querying for (%d, %d), (%d, %d)",
+                 real_start.i,
+                 real_start.j,
+                 real_stop.i,
+                 real_stop.j);
+        cv::rectangle(
+            map_image_frame, {real_start.j, real_start.i}, {real_stop.j, real_stop.i}, GREY, 2);
         for (const auto& match : tree.range_query(real_start, real_stop))
         {
             slam::Coordinate coord;

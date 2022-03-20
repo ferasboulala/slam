@@ -23,8 +23,10 @@ AStar::AStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B)
 {
     m_heuristic = [this](const Coordinate& X) { return manhattan_distance(X, m_B); };
 
-    m_comp = [this](const std::tuple<Coordinate, double>& X, const std::tuple<Coordinate, double>& Y) {
-        return std::get<1>(X) + m_heuristic(std::get<0>(X)) > std::get<1>(Y) + m_heuristic(std::get<0>(Y));
+    m_comp = [this](const std::tuple<Coordinate, double>& X,
+                    const std::tuple<Coordinate, double>& Y) {
+        return std::get<1>(X) + m_heuristic(std::get<0>(X)) >
+               std::get<1>(Y) + m_heuristic(std::get<0>(Y));
     };
 
     m_q.push_back(std::tuple<Coordinate, double>{A, 0.0});

@@ -52,7 +52,9 @@ inline bool within_boundaries(const cv::Mat& map, Coordinate& point)
     return point.i < map.rows && point.j < map.cols && point.i >= 0 && point.j >= 0;
 }
 
-inline bool within_bounding_box(const Coordinate& point, const Coordinate& start, const Coordinate& stop)
+inline bool within_bounding_box(const Coordinate& point,
+                                const Coordinate& start,
+                                const Coordinate& stop)
 {
     return point.i >= start.i && point.i <= stop.i && point.j >= start.j && point.j <= stop.j;
 }
@@ -62,7 +64,8 @@ inline bool bounding_boxes_intersect(const Coordinate& a_start,
                                      const Coordinate& b_start,
                                      const Coordinate& b_stop)
 {
-    return !(a_stop.i < b_start.i || a_start.i > b_stop.i || a_stop.j < b_start.j || a_start.j > b_stop.j);
+    return !(a_stop.i < b_start.i || a_start.i > b_stop.i || a_stop.j < b_start.j ||
+             a_start.j > b_stop.j);
 }
 
 inline double log_odds(double p) { return std::log(p / (1 - p)); }
@@ -85,8 +88,10 @@ inline std::array<Coordinate, 8> adjacency_8(const Coordinate& X)
 
 inline std::array<Coordinate, 4> adjacency_4(const Coordinate& X)
 {
-    const std::array<Coordinate, 4> neighbourhood = {
-        Coordinate{X.i + 1, X.j}, Coordinate{X.i, X.j + 1}, Coordinate{X.i - 1, X.j}, Coordinate{X.i, X.j - 1}};
+    const std::array<Coordinate, 4> neighbourhood = {Coordinate{X.i + 1, X.j},
+                                                     Coordinate{X.i, X.j + 1},
+                                                     Coordinate{X.i - 1, X.j},
+                                                     Coordinate{X.i, X.j - 1}};
 
     return neighbourhood;
 }
@@ -98,30 +103,46 @@ inline bool within_boundaries(const cv::Mat& map, const Coordinate& X)
     return X.i < map.rows && X.j < map.cols && X.i >= 0 && X.j >= 0;
 }
 
+template <typename T>
+inline T mahattan_distance(const T& Ax, const T& Ay, const T& Bx, const T& By)
+{
+    return std::abs(Ax - Bx) + std::abs(Ay - By);
+}
+
 inline int manhattan_distance(const Coordinate& A, const Coordinate& B)
 {
-    return std::abs(A.i - B.i) + std::abs(A.j - B.j);
+    return mahattan_distance(A.i, A.j, B.i, B.j);
+}
+
+template <typename T>
+inline T euclidean_distance_squared(const T& Ax, const T& Ay, const T& Bx, const T& By)
+{
+    const T dx = Ax - Bx;
+    const T dy = Ay - By;
+
+    return dx * dx + dy * dy;
+}
+
+template <typename T>
+inline double euclidean_distance(const T& Ax, const T& Ay, const T& Bx, const T& By)
+{
+    return std::sqrt(static_cast<double>(euclidean_distance_squared(Ax, Ay, Bx, By)));
 }
 
 inline int euclidean_distance_squared(const Coordinate& A, const Coordinate& B)
 {
-    const int idiff = A.i - B.i;
-    const int jdiff = A.j - B.j;
-
-    return idiff * idiff + jdiff * jdiff;
+    return euclidean_distance_squared(A.i, A.j, B.i, B.j);
 }
 
-inline double euclidean_distance(const Coordinate& A, const Coordinate& B)
+inline int euclidean_distance_squared(const Pose& A, const Pose& B)
+{
+    return euclidean_distance_squared(A.x, A.y, B.x, B.y);
+}
+
+template <typename T>
+inline double euclidean_distance(const T& A, const T& B)
 {
     return std::sqrt(static_cast<double>(euclidean_distance_squared(A, B)));
-}
-
-inline double euclidean_distance(const Pose& A, const Pose& B)
-{
-    const double dx = B.x - A.x;
-    const double dy = B.y - A.y;
-
-    return std::sqrt(dx * dx + dy * dy);
 }
 
 }  // namespace

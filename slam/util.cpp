@@ -57,7 +57,8 @@ Coordinate random_point(const cv::Mat& map)
     std::uniform_int_distribution<std::mt19937::result_type> distribution_i(0, map.rows);
     std::uniform_int_distribution<std::mt19937::result_type> distribution_j(0, map.cols);
 
-    return {static_cast<int>(distribution_i(generator)), static_cast<int>(distribution_j(generator))};
+    return {static_cast<int>(distribution_i(generator)),
+            static_cast<int>(distribution_j(generator))};
 }
 
 Pose average_pose(const std::vector<Particle>& particles)

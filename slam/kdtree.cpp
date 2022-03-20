@@ -9,9 +9,13 @@
 namespace slam
 {
 KDTree::KDTree() : m_root(nullptr) {}
-KDTree::KDTree(const std::vector<std::tuple<Coordinate, void*>>& points) : KDTree() { balance(points); }
+KDTree::KDTree(const std::vector<std::tuple<Coordinate, void*>>& points) : KDTree()
+{
+    balance(points);
+}
 KDTree::~KDTree() { free(m_root); }
-static void list_points_helper(KDTree::Node* root, std::vector<std::tuple<Coordinate, void*>>& points)
+static void list_points_helper(KDTree::Node* root,
+                               std::vector<std::tuple<Coordinate, void*>>& points)
 {
     if (root == nullptr)
     {
@@ -104,7 +108,9 @@ void KDTree::add(const Coordinate& point, void* data)
     add_helper(m_root, point, data);
 }
 
-static void nearest_neighbor_helper(const Coordinate& point, KDTree::Node* root, KDTree::Node** best)
+static void nearest_neighbor_helper(const Coordinate& point,
+                                    KDTree::Node* root,
+                                    KDTree::Node** best)
 {
     if (root == nullptr)
     {
@@ -192,7 +198,8 @@ void KDTree::free(Node* root)
     delete root;
 }
 
-static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i, int stop_i, int start_j, int stop_j)
+static void draw_helper(
+    cv::Mat& canvas, KDTree::Node* root, int start_i, int stop_i, int start_j, int stop_j)
 {
     if (root == nullptr) return;
 
@@ -210,5 +217,8 @@ static void draw_helper(cv::Mat& canvas, KDTree::Node* root, int start_i, int st
     }
 }
 
-void KDTree::draw(cv::Mat& canvas) const { draw_helper(canvas, m_root, 0, canvas.rows, 0, canvas.cols); }
+void KDTree::draw(cv::Mat& canvas) const
+{
+    draw_helper(canvas, m_root, 0, canvas.rows, 0, canvas.cols);
+}
 }  // namespace slam

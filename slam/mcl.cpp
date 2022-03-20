@@ -64,10 +64,11 @@ void MCL::update_inner(const std::vector<std::tuple<double, double>>& scan,
         particle.pose.x += dx;
         particle.pose.y += dy;
         double weight = 0;
+        const double max_dist_squared = max_dist * max_dist;
         for (const auto& [angle, dist] : scan)
         {
             particle.pose.theta = pose.theta + angle + scanner_rot;
-            double w = measurement_model_beam(dist, stddev, particle, max_dist);
+            double w = measurement_model_beam(dist * dist, stddev, particle, max_dist_squared);
             weight += std::log(w);
         }
         particle.weight = std::exp(weight);
@@ -123,14 +124,15 @@ void MCL::update(const std::vector<std::tuple<double, double>>& scan,
         int n = number_particles_per_thread;
         if (i == threads.size() - 1) n += m_particles.size() % threads.size();
 
-        threads[i] = std::thread(&MCL::update_inner,
-                                 this,
-                                 scan,
-                                 stddev,
-                                 max_dist,
-                                 start,
-                                 n,
-                                 std::tuple<double, double, double>{scanner_d, scanner_theta, scanner_offset.theta});
+        threads[i] = std::thread(
+            &MCL::update_inner,
+            this,
+            scan,
+            stddev,
+            max_dist,
+            start,
+            n,
+            std::tuple<double, double, double>{scanner_d, scanner_theta, scanner_offset.theta});
     }
 
     for (std::thread& thread : threads)

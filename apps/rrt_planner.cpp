@@ -87,7 +87,8 @@ int main(int argc, char** argv)
     map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_64F);
-    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernel_size, kernel_size));
+    const cv::Mat kernel =
+        cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernel_size, kernel_size));
     cv::erode(map, map, kernel);
 
     cv::namedWindow("rrt");

@@ -33,7 +33,10 @@ private:
 
     static void free(Node* root);
 
-    static void draw_helper(cv::Mat& canvas, const Node* root, const Coordinate& start, const Coordinate& stop);
+    static void draw_helper(cv::Mat& canvas,
+                            const Node* root,
+                            const Coordinate& start,
+                            const Coordinate& stop);
 
     static void add_helper(Node* root, const Coordinate& point, void* data);
     static inline std::array<std::pair<Coordinate, Coordinate>, 4> regions(const Coordinate& point,

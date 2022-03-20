@@ -30,7 +30,7 @@ public:
 
     bool pathfind(cv::Mat* canvas);
     std::vector<Coordinate> recover_path();
-    unsigned size() const { return m_size; }
+    inline unsigned size() const { return m_size; }
 
 private:
     struct CuboidIndex
@@ -38,9 +38,26 @@ private:
         int i;
         int j;
         int k;
-        inline bool operator==(const CuboidIndex& other) const { return i == other.i && j == other.j && k == other.k; }
+        inline bool operator==(const CuboidIndex& other) const
+        {
+            return i == other.i && j == other.j && k == other.k;
+        }
         inline bool operator!=(const CuboidIndex& other) const { return !(*this == other); }
     };
+
+    struct CuboidEntry
+    {
+        double cost;
+        CuboidIndex parent;
+    };
+
+    inline CuboidEntry& cuboid_at(const CuboidIndex& index)
+    {
+        const unsigned unraveled_index =
+            index.i * m_map.cols * m_theta_res + index.j * m_theta_res + index.k;
+
+        return m_cuboid[unraveled_index];
+    }
 
     CuboidIndex pose_to_cuboid_index(const Pose& pose) const;
     bool can_reach(const Pose& src, const Pose& dst) const;
@@ -69,6 +86,7 @@ private:
     double m_v;
     double m_theta;
     double m_length;
+    unsigned m_theta_res;
     double m_tol;
     bool m_diff_drive;
 
@@ -77,9 +95,7 @@ private:
     std::vector<double> m_thetas;
     std::vector<double> m_steering_costs;
 
-    using Grid = std::vector<std::vector<std::pair<double, CuboidIndex>>>;
-    using Cuboid = std::vector<Grid>;
-    Cuboid m_costs;
+    std::vector<CuboidEntry> m_cuboid;
     std::vector<Node> m_q;  // point, orientation, cost
     std::function<bool(const Node& X, const Node& Y)> m_comp;
 };

@@ -104,24 +104,28 @@ void QuadTree::range_query_helper(const Node* root,
     const auto subregions = regions(root->point, node_start, node_stop);
     if (bounding_boxes_intersect(subregions[0].first, subregions[0].second, start, stop))
     {
-        range_query_helper(root->NE, start, stop, result, subregions[0].first, subregions[0].second);
+        range_query_helper(
+            root->NE, start, stop, result, subregions[0].first, subregions[0].second);
     }
     if (bounding_boxes_intersect(subregions[1].first, subregions[1].second, start, stop))
     {
-        range_query_helper(root->NW, start, stop, result, subregions[1].first, subregions[1].second);
+        range_query_helper(
+            root->NW, start, stop, result, subregions[1].first, subregions[1].second);
     }
     if (bounding_boxes_intersect(subregions[2].first, subregions[2].second, start, stop))
     {
-        range_query_helper(root->SE, start, stop, result, subregions[2].first, subregions[2].second);
+        range_query_helper(
+            root->SE, start, stop, result, subregions[2].first, subregions[2].second);
     }
     if (bounding_boxes_intersect(subregions[3].first, subregions[3].second, start, stop))
     {
-        range_query_helper(root->SW, start, stop, result, subregions[3].first, subregions[3].second);
+        range_query_helper(
+            root->SW, start, stop, result, subregions[3].first, subregions[3].second);
     }
 }
 
-std::vector<std::tuple<Coordinate, void*>> QuadTree::range_query(const Coordinate& upper_left,
-                                                                 const Coordinate& bottom_right) const
+std::vector<std::tuple<Coordinate, void*>> QuadTree::range_query(
+    const Coordinate& upper_left, const Coordinate& bottom_right) const
 {
     std::vector<std::tuple<Coordinate, void*>> result;
 
@@ -135,7 +139,10 @@ std::vector<std::tuple<Coordinate, void*>> QuadTree::range_query(const Coordinat
     return result;
 }
 
-void QuadTree::draw_helper(cv::Mat& canvas, const Node* root, const Coordinate& start, const Coordinate& stop)
+void QuadTree::draw_helper(cv::Mat& canvas,
+                           const Node* root,
+                           const Coordinate& start,
+                           const Coordinate& stop)
 {
     if (root == nullptr) return;
 
@@ -149,5 +156,8 @@ void QuadTree::draw_helper(cv::Mat& canvas, const Node* root, const Coordinate& 
     draw_helper(canvas, root->SW, subregions[3].first, subregions[3].second);
 }
 
-void QuadTree::draw(cv::Mat& canvas) const { draw_helper(canvas, m_root, {0, 0}, {canvas.rows - 1, canvas.cols - 1}); }
+void QuadTree::draw(cv::Mat& canvas) const
+{
+    draw_helper(canvas, m_root, {0, 0}, {canvas.rows - 1, canvas.cols - 1});
+}
 }  // namespace slam

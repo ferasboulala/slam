@@ -26,17 +26,21 @@ HybridAStar::HybridAStar(cv::Mat& map,
       m_v(v),
       m_theta(theta),
       m_length(length),
-      m_tol(tol),
+      m_theta_res(theta_res),
+      m_tol(tol * tol),
       m_diff_drive(diff_drive)
 {
-    m_costs = Cuboid(map.rows,
-                     Grid(map.cols,
-                          std::vector<std::pair<double, CuboidIndex>>(
-                              theta_res, {std::numeric_limits<double>::max(), {-1, -1, -1}})));
+    m_cuboid.resize(map.rows * map.cols * theta_res);
+    for (unsigned i = 0; i < m_cuboid.size(); ++i)
+    {
+        m_cuboid[i].cost = std::numeric_limits<double>::max();
+    }
 
     m_target = pose_to_cuboid_index(B);
 
-    m_comp = [this](const Node& X, const Node& Y) { return X.cost + X.dist_to_target > Y.cost + Y.dist_to_target; };
+    m_comp = [this](const Node& X, const Node& Y) {
+        return X.cost + X.dist_to_target > Y.cost + Y.dist_to_target;
+    };
 
     const CuboidIndex start = pose_to_cuboid_index(A);
     m_q.push_back({A, 0.0, euclidean_distance(A, B), start});
@@ -61,6 +65,8 @@ HybridAStar::HybridAStar(cv::Mat& map,
 std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose& pose) const
 {
     std::vector<std::pair<Pose, double>> neighborhood;
+    neighborhood.reserve(m_velocities.size() * m_thetas.size());
+
     constexpr double REVERSE_FACTOR = 10;
     for (double vel : m_velocities)
     {
@@ -89,7 +95,7 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
     if (!within_boundaries(m_map, dst_coord)) return false;
     if (m_map.at<double>(dst_coord.i, dst_coord.j) < 0.5) return false;
 
-    const double dist = euclidean_distance(src, dst);
+    const double dist_squared = euclidean_distance_squared(src, dst);
     const double dx = dst.x - src.x;
     const double dy = dst.y - src.y;
     const double angle = std::atan2(dy, dx);
@@ -97,8 +103,8 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
     Pose raycast_pose = src;
     raycast_pose.theta = angle;
 
-    // FIXME : Use circular raycast using this formula until we reach the point
-    return raycast<double>(m_map, raycast_pose, dist).x == -1;
+    // FIXME : Use circular raycast
+    return raycast<double>(m_map, raycast_pose, dist_squared).x == -1;
 }
 
 bool HybridAStar::pathfind(cv::Mat* canvas)
@@ -122,10 +128,12 @@ bool HybridAStar::pathfind(cv::Mat* canvas)
         m_q.pop_back();
 
         const CuboidIndex X_index = pose_to_cuboid_index(X.pose);
-        if (X.cost >= std::get<0>(m_costs[X_index.i][X_index.j][X_index.k])) continue;
-        m_costs[X_index.i][X_index.j][X_index.k] = {X.cost, X.parent};
+        CuboidEntry& entry = cuboid_at(X_index);
+        if (X.cost >= entry.cost) continue;
+        entry.cost = X.cost;
+        entry.parent = X.parent;
 
-        const bool within_tol = euclidean_distance(X.pose, m_B) <= m_tol;
+        const bool within_tol = euclidean_distance_squared(X.pose, m_B) <= m_tol;
         if (within_tol)
         {
             m_last_node = X_index;
@@ -170,7 +178,7 @@ std::vector<Coordinate> HybridAStar::recover_path()
     while (next != start)
     {
         path.push_back({next.i, next.j});
-        next = std::get<1>(m_costs[next.i][next.j][next.k]);
+        next = cuboid_at(next).parent;
     }
 
     std::reverse(path.begin(), path.end());
@@ -181,8 +189,8 @@ std::vector<Coordinate> HybridAStar::recover_path()
 HybridAStar::CuboidIndex HybridAStar::pose_to_cuboid_index(const Pose& pose) const
 {
     const Coordinate coord = pose_to_image_coordinates_(m_map, pose);
-    const double angle = std::fmod(std::fmod(pose.theta, 2 * M_PI) + 2 * M_PI, 2 * M_PI);
-    const int angle_index = angle / (2 * M_PI / m_costs.front().front().size());
+    const double angle = std::fmod(pose.theta + 2 * M_PI, 2 * M_PI);
+    const int angle_index = angle / (2 * M_PI / m_theta_res);
 
     return {coord.i, coord.j, angle_index};
 }

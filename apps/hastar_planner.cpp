@@ -19,7 +19,8 @@ static bool draw;
 static constexpr double VEL = 10;
 static constexpr double STEERING_ANGLE = DEG2RAD(40);
 static constexpr double DESIRED_DELTA_STEERING_ANGLE = DEG2RAD(10);
-static constexpr double VEHICLE_LENGTH = VEL * std::tan(STEERING_ANGLE) / DESIRED_DELTA_STEERING_ANGLE;
+static constexpr double VEHICLE_LENGTH =
+    VEL * std::tan(STEERING_ANGLE) / DESIRED_DELTA_STEERING_ANGLE;
 
 static constexpr int POINT_SIZE = 7;
 
@@ -59,7 +60,8 @@ void mouse_callback(int event, int x, int y, int, void*)
         const slam::Pose A_pose = slam::image_coordinates_to_pose(map, A);
         slam::Pose B_pose = slam::image_coordinates_to_pose(map, B);
         B_pose.theta = M_PI / 2;
-        auto finder = slam::HybridAStar(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
+        auto finder = slam::HybridAStar(
+            map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
         cv::Mat* canvas = draw ? &color_map : nullptr;
         while (!finder.pathfind(canvas))
         {
@@ -101,7 +103,8 @@ int main(int argc, char** argv)
     map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_64F);
-    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernel_size, kernel_size));
+    const cv::Mat kernel =
+        cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernel_size, kernel_size));
     cv::erode(map, map, kernel);
 
     cv::namedWindow("hastar");

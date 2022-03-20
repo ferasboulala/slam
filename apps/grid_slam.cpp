@@ -18,7 +18,8 @@ enum class Key : int
     Q = 113
 };
 
-void draw_particle(cv::Mat& img, const slam::Pose& pose, cv::Scalar color, int size, bool filled = false)
+void draw_particle(
+    cv::Mat& img, const slam::Pose& pose, cv::Scalar color, int size, bool filled = false)
 {
     const auto coord = slam::pose_to_image_coordinates(img, pose);
     int i, j;
@@ -107,7 +108,11 @@ int main(int argc, char** argv)
 
         const slam::Pose& average_pose = slam::average_pose(mcl.get_particles());
         draw_particle(map_image_frame, average_pose, RED, 5, true);
-        draw_particle(map_image_frame, slam::MCL::sensor_position(average_pose, SCANNER_OFFSET), RED, 3, true);
+        draw_particle(map_image_frame,
+                      slam::MCL::sensor_position(average_pose, SCANNER_OFFSET),
+                      RED,
+                      3,
+                      true);
 
         cv::imshow("slam", map_image_frame);
 
@@ -120,7 +125,8 @@ int main(int argc, char** argv)
 
         if (++frame % EVERY_OTHER == 0)
         {
-            const slam::Pose sensor_position = slam::MCL::sensor_position(real_position, SCANNER_OFFSET);
+            const slam::Pose sensor_position =
+                slam::MCL::sensor_position(real_position, SCANNER_OFFSET);
             const std::vector<slam::Pose> hits = fake_lidar.scan(map, sensor_position);
             std::vector<std::tuple<double, double>> scans;
             scans.reserve(hits.size());
@@ -132,7 +138,8 @@ int main(int argc, char** argv)
                 double dist;
                 if (hit.x != -1)
                 {
-                    dist = std::sqrt(std::pow(hit.y - sensor_position.y, 2) + std::pow(hit.x - sensor_position.x, 2));
+                    dist = std::sqrt(std::pow(hit.y - sensor_position.y, 2) +
+                                     std::pow(hit.x - sensor_position.x, 2));
                 }
                 else
                 {
