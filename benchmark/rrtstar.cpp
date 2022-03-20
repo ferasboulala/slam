@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include "hastar.h"
+#include "rrtstar.h"
 #include "opencv2/opencv.hpp"
 
 #define DEG2RAD(x) (x * M_PI / 180)
@@ -10,10 +10,8 @@
 static const char *IMG_FILENAME = "assets/floor_plan.png";
 static constexpr unsigned N_BENCHMARK_ITER = 10;
 static constexpr unsigned KERNEL_SIZE = 15;
-static constexpr double VEL = 10;
-static constexpr double STEERING_ANGLE = DEG2RAD(40);
-static constexpr double DESIRED_DELTA_STEERING_ANGLE = DEG2RAD(10);
-static constexpr double VEHICLE_LENGTH = VEL * std::tan(STEERING_ANGLE) / DESIRED_DELTA_STEERING_ANGLE;
+static constexpr unsigned REACH = 20;
+static constexpr unsigned RADIUS = 50;
 
 void benchmark_hastar(benchmark::State &state)
 {
@@ -23,11 +21,11 @@ void benchmark_hastar(benchmark::State &state)
     const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(KERNEL_SIZE, KERNEL_SIZE));
     cv::erode(map, map, kernel);
 
-    const slam::Pose A{400, 450, 0};
-    const slam::Pose B{700, 150, 0};
+    const slam::Coordinate A{400, 450};
+    const slam::Coordinate B{700, 150};
 
     for (auto _ : state) {
-        auto finder = slam::HybridAStar(map, A, B, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
+        auto finder = slam::RRTStar(map, A, B, 20, 50);
         while (!finder.pathfind(nullptr)) {}
     }
 }
