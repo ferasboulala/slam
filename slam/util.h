@@ -44,7 +44,8 @@ inline Pose image_coordinates_to_pose(const cv::Mat& map, const Coordinate& coor
 
 inline bool within_boundaries(const cv::Mat& map, const int i, const int j)
 {
-    return static_cast<unsigned>(i) < static_cast<unsigned>(map.rows) && static_cast<unsigned>(j) < static_cast<unsigned>(map.cols);
+    return static_cast<unsigned>(i) < static_cast<unsigned>(map.rows) &&
+           static_cast<unsigned>(j) < static_cast<unsigned>(map.cols);
 }
 
 inline bool within_boundaries(const cv::Mat& map, Coordinate& point)
