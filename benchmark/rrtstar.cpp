@@ -7,7 +7,7 @@
 
 #define DEG2RAD(x) (x * M_PI / 180)
 
-static const char *IMG_FILENAME = "assets/floor_plan.png";
+static const char *IMG_FILENAME = "/home/ubuntu/Documents/slam/assets/floor_plan.png";
 static constexpr unsigned N_BENCHMARK_ITER = 10;
 static constexpr unsigned KERNEL_SIZE = 15;
 static constexpr unsigned REACH = 20;
@@ -21,11 +21,11 @@ void benchmark_hastar(benchmark::State &state)
     const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(KERNEL_SIZE, KERNEL_SIZE));
     cv::erode(map, map, kernel);
 
-    const slam::Coordinate A{400, 450};
-    const slam::Coordinate B{700, 150};
+    const slam::Coordinate A{150, 450};
+    const slam::Coordinate B{450, 750};
 
     for (auto _ : state) {
-        auto finder = slam::RRTStar(map, A, B, 20, 50);
+        auto finder = slam::RRTStar(map, A, B, 20, 50, 1234);
         while (!finder.pathfind(nullptr)) {}
     }
 }

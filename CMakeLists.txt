@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.17)
 
 project(slam)
 
-add_compile_options(-Ofast -g -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17) #-Werror)
+add_compile_options(-O2 -march=native -g -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17 -fverbose-asm -save-temps)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ALL_LIBRARIES)
 set(CMAKE_BUILD_TYPE Release)

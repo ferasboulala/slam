@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <limits>
+#include <optional>
 
 #include "colors.h"
 #include "raycast.h"
@@ -12,14 +13,15 @@ static constexpr unsigned MAX_N_NODES = 1e9 / sizeof(slam::RRTStar::Node);  // 1
 namespace slam
 {
 RRTStar::RRTStar(
-    const cv::Mat &map, const Coordinate &A, const Coordinate &B, int reach, int radius)
+    const cv::Mat &map, const Coordinate &A, const Coordinate &B, int reach, int radius, int seed)
     : m_A(A),
       m_B(B),
       m_map(map),
       m_root(new Node{A, nullptr, 0}),
       m_last_node(nullptr),
       m_reach(reach),
-      m_radius(radius)
+      m_radius(radius),
+      m_seed(seed)
 {
     assert(radius >= reach);
     m_kd_tree.add(A, reinterpret_cast<void *>(m_root));
@@ -36,6 +38,10 @@ RRTStar::~RRTStar()
 RRTStar::Node *RRTStar::can_reach(const Coordinate &root_point, const Coordinate &new_point) const
 {
     double dist = euclidean_distance(root_point, new_point);
+    if (!dist)
+    {
+        return nullptr;
+    }
     Coordinate new_point_to_add;
     const double di = (new_point.i - root_point.i) / dist;
     const double dj = (new_point.j - root_point.j) / dist;
@@ -61,7 +67,7 @@ bool RRTStar::pathfind(cv::Mat *canvas)
 {
     while (m_nodes.size() < MAX_N_NODES)
     {
-        const Coordinate new_point = random_point(m_map);
+        const Coordinate new_point = random_point(m_map, m_seed);
         const auto nn = m_kd_tree.nearest_neighbor(new_point);
         Coordinate point;
         void *root_ptr;
@@ -151,7 +157,7 @@ bool RRTStar::pathfind(cv::Mat *canvas)
         return false;
     }
 
-    log_error("Reached the maximum allowed states");
+    log_error("Reached the maximum number of allowed states");
     m_used_up = true;
 
     return true;

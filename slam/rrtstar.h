@@ -21,9 +21,14 @@ public:
 
     /**
      * Map should be in the CV_64F format where each value is the probability
-     * that the cell is free.
+     * that the cell is free. If seed = -1, it will use system time.
      **/
-    RRTStar(const cv::Mat& map, const Coordinate& A, const Coordinate& B, int reach, int radius);
+    RRTStar(const cv::Mat& map,
+            const Coordinate& A,
+            const Coordinate& B,
+            int reach,
+            int radius,
+            int seed = -1);
     RRTStar(const RRTStar& other) = delete;
     ~RRTStar();
 
@@ -52,6 +57,7 @@ private:
     Node* m_last_node;
     int m_reach;
     int m_radius;
+    int m_seed;
     KDTree m_kd_tree;
     QuadTree m_quad_tree;
     std::vector<Node*> m_nodes;

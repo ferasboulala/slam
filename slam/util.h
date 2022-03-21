@@ -44,7 +44,7 @@ inline Pose image_coordinates_to_pose(const cv::Mat& map, const Coordinate& coor
 
 inline bool within_boundaries(const cv::Mat& map, const int i, const int j)
 {
-    return i < map.rows && j < map.cols && i >= 0 && j >= 0;
+    return static_cast<unsigned>(i) < static_cast<unsigned>(map.rows) && static_cast<unsigned>(j) < static_cast<unsigned>(map.cols);
 }
 
 inline bool within_boundaries(const cv::Mat& map, Coordinate& point)
@@ -70,7 +70,7 @@ inline bool bounding_boxes_intersect(const Coordinate& a_start,
 
 inline double log_odds(double p) { return std::log(p / (1 - p)); }
 inline double log_odds_inv(double l) { return 1 - (1.0 / (1 + std::exp(l))); }
-Coordinate random_point(const cv::Mat& map);
+Coordinate random_point(const cv::Mat& map, int seed = -1);
 
 inline std::array<Coordinate, 8> adjacency_8(const Coordinate& X)
 {
