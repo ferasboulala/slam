@@ -36,10 +36,10 @@ Pose raycast<double>(const cv::Mat& map,
             continue;
         }
 
-        if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
-
         const double d = euclidean_distance_squared(x, y, pose.x, pose.y);
         if (d >= max_distance_squared) return {-1, -1, pose.theta};
+
+        if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
 
         if (map.at<double>(i, j) < 0.5)  // probability that it is free
         {
