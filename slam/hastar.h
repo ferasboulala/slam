@@ -14,7 +14,7 @@ namespace slam
 class HybridAStar
 {
 public:
-    HybridAStar(cv::Mat& map,
+    HybridAStar(const cv::Mat& map,
                 const Pose& A,
                 const Pose& B,
                 double v,
@@ -28,6 +28,16 @@ public:
 
     ~HybridAStar() = default;
 
+    void reset(const cv::Mat& map,
+               const Pose& A,
+               const Pose& B,
+               double v,
+               double theta,
+               double length,
+               unsigned theta_res,
+               int branching_factor,
+               double tol,
+               bool m_diff_drive = true);
     bool pathfind(cv::Mat* canvas);
     std::vector<Coordinate> recover_path();
     inline unsigned size() const { return m_size; }
@@ -47,6 +57,7 @@ private:
 
     struct CuboidEntry
     {
+        CuboidEntry() { cost = std::numeric_limits<double>::max(); }
         double cost;
         CuboidIndex parent;
     };
@@ -65,6 +76,13 @@ private:
 
     struct Node
     {
+        Node(const Pose& p, double c, double d, const CuboidIndex& i)
+        {
+            pose = p;
+            cost = c;
+            dist_to_target = d;
+            parent = i;
+        }
         Pose pose;
         double cost;
         double dist_to_target;
@@ -80,7 +98,7 @@ private:
     CuboidIndex m_target;
     CuboidIndex m_last_node;
 
-    const cv::Mat& m_map;
+    cv::Mat m_map;
 
     unsigned m_size;
     double m_v;

@@ -7,7 +7,7 @@
 
 namespace slam
 {
-HybridAStar::HybridAStar(cv::Mat& map,
+HybridAStar::HybridAStar(const cv::Mat& map,
                          const Pose& A,
                          const Pose& B,
                          double v,
@@ -17,24 +17,36 @@ HybridAStar::HybridAStar(cv::Mat& map,
                          int branching_factor,
                          double tol,
                          bool diff_drive)
-    : m_success(false),
-      m_used_up(false),
-      m_A(A),
-      m_B(B),
-      m_map(map),
-      m_size(0),
-      m_v(v),
-      m_theta(theta),
-      m_length(length),
-      m_theta_res(theta_res),
-      m_tol(tol * tol),
-      m_diff_drive(diff_drive)
 {
+    reset(map, A, B, v, theta, length, theta_res, branching_factor, tol, diff_drive);
+}
+
+void HybridAStar::reset(const cv::Mat& map,
+                        const Pose& A,
+                        const Pose& B,
+                        double v,
+                        double theta,
+                        double length,
+                        unsigned theta_res,
+                        int branching_factor,
+                        double tol,
+                        bool diff_drive)
+{
+    m_success = false;
+    m_used_up = false;
+    m_A = A;
+    m_B = B;
+    m_map = map;
+    m_size = 0;
+    m_v = v;
+    m_theta = theta;
+    m_length = length;
+    m_theta_res = theta_res;
+    m_tol = tol * tol;
+    m_diff_drive = diff_drive;
+
+    m_cuboid.clear();
     m_cuboid.resize(map.rows * map.cols * theta_res);
-    for (unsigned i = 0; i < m_cuboid.size(); ++i)
-    {
-        m_cuboid[i].cost = std::numeric_limits<double>::max();
-    }
 
     m_target = pose_to_cuboid_index(B);
 
@@ -43,6 +55,7 @@ HybridAStar::HybridAStar(cv::Mat& map,
     };
 
     const CuboidIndex start = pose_to_cuboid_index(A);
+    m_q.clear();
     m_q.push_back({A, 0.0, euclidean_distance(A, B), start});
     std::push_heap(m_q.begin(), m_q.end(), m_comp);
 
@@ -52,6 +65,8 @@ HybridAStar::HybridAStar(cv::Mat& map,
     const double COST_SLOPE = v / (branching_factor - 1);
     const double dtheta = theta * 2 / (branching_factor - 1);
     const int mid = branching_factor / 2;
+    m_thetas.clear();
+    m_steering_costs.clear();
     for (int i = 0; i < branching_factor; ++i)
     {
         m_thetas.push_back(-theta + i * dtheta);
@@ -81,7 +96,7 @@ std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose&
             new_pose.x += vel * std::cos(new_pose.theta);
             new_pose.y += vel * std::sin(new_pose.theta);
 
-            neighborhood.push_back({new_pose, m_v + cost * cost_factor});
+            neighborhood.emplace_back(new_pose, m_v + cost * cost_factor);
         }
     }
 
@@ -111,7 +126,7 @@ bool HybridAStar::pathfind(cv::Mat* canvas)
 {
     if (m_success || m_used_up)
     {
-        log_error("HA* object must now be deallocated");
+        log_error("HA* object must now be reset or deallocated");
         return true;
     }
 
@@ -148,7 +163,7 @@ bool HybridAStar::pathfind(cv::Mat* canvas)
             std::tie(pose, cost) = neighbor;
 
             if (!can_reach(X.pose, pose)) continue;
-            m_q.push_back({pose, X.cost + cost, euclidean_distance(pose, m_B), X_index});
+            m_q.emplace_back(pose, X.cost + cost, euclidean_distance(pose, m_B), X_index);
             std::push_heap(m_q.begin(), m_q.end(), m_comp);
 
             if (canvas)

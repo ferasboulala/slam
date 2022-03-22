@@ -6,6 +6,7 @@
 #include "opencv2/opencv.hpp"
 #include "thirdparty/log.h"
 
+static slam::HybridAStar* finder;
 static cv::Mat map;
 static cv::Mat map_;
 static cv::Mat color_map;
@@ -60,10 +61,9 @@ void mouse_callback(int event, int x, int y, int, void*)
         const slam::Pose A_pose = slam::image_coordinates_to_pose(map, A);
         slam::Pose B_pose = slam::image_coordinates_to_pose(map, B);
         B_pose.theta = M_PI / 2;
-        auto finder = slam::HybridAStar(
-            map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
+        finder->reset(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
         cv::Mat* canvas = draw ? &color_map : nullptr;
-        while (!finder.pathfind(canvas))
+        while (!finder->pathfind(canvas))
         {
             if (draw)
             {
@@ -74,7 +74,7 @@ void mouse_callback(int event, int x, int y, int, void*)
         }
 
         slam::Coordinate prev = A;
-        const std::vector<slam::Coordinate> path = finder.recover_path();
+        const std::vector<slam::Coordinate> path = finder->recover_path();
         for (const slam::Coordinate& coord : path)
         {
             cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
@@ -83,9 +83,9 @@ void mouse_callback(int event, int x, int y, int, void*)
 
         cv::imshow("hastar", color_map);
         if (path.empty())
-            log_info("No path found path after %u states explored", finder.size());
+            log_info("No path found path after %u states explored", finder->size());
         else
-            log_info("Found path after %u states explored", finder.size());
+            log_info("Found path after %u states explored", finder->size());
     }
 }
 
@@ -113,12 +113,15 @@ int main(int argc, char** argv)
     cv::imshow("hastar", map);
     map.convertTo(map_, CV_32F);
     cv::cvtColor(map_, color_map, cv::COLOR_GRAY2RGB);
+    finder = new slam::HybridAStar(map, {}, {}, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
     while (true)
     {
         const int key = cv::waitKey(0);
         if (key == 113)  // q
             break;
     }
+
+    delete finder;
 
     return 0;
 }
