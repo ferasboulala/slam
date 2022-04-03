@@ -107,7 +107,7 @@ void MCL::update(const std::vector<std::tuple<double, double>>& scan,
 {
     if (n_threads == -1)
     {
-        n_threads = std::thread::hardware_concurrency();
+        n_threads = 2 * std::thread::hardware_concurrency();
     }
     else
     {
@@ -141,10 +141,20 @@ void MCL::update(const std::vector<std::tuple<double, double>>& scan,
         thread.join();
     }
 
-    resample_particles();
+    resample_particles(n_threads);
 }
 
-std::vector<Particle> MCL::probabilistic_fitness_selection()
+static void probabilistic_fitness_selection_inner(std::vector<Particle>& new_particles,
+                                                  int start,
+                                                  int n)
+{
+    for (int i = start; i < start + n; ++i)
+    {
+        new_particles[i].map = new_particles[i].map.clone();
+    }
+}
+
+std::vector<Particle> MCL::probabilistic_fitness_selection(int n_threads)
 {
     // O(nlog m) where m = particles.size()
     double sum = 0;
@@ -165,8 +175,7 @@ std::vector<Particle> MCL::probabilistic_fitness_selection()
         cumulative_sums.push_back(cumulative_sums.back() + m_particles[i].weight);
     }
 
-    std::vector<Particle> new_particles;
-    new_particles.reserve(m_particles.size());
+    std::vector<Particle> new_particles(m_particles.size());
     for (unsigned k = 0; k < m_particles.size(); ++k)
     {
         const double cutoff = distribution(generator);
@@ -190,17 +199,32 @@ std::vector<Particle> MCL::probabilistic_fitness_selection()
             }
         }
 
-        Particle copy = m_particles[i];
-        copy.map = m_particles[i].map.clone();
-        new_particles.push_back(copy);
+        new_particles[k] = m_particles[i];
+    }
+
+    std::vector<std::thread> threads(n_threads);
+    const int number_particles_per_thread = m_particles.size() / threads.size();
+    for (unsigned i = 0; i < threads.size(); ++i)
+    {
+        const int start = i * number_particles_per_thread;
+        int n = number_particles_per_thread;
+        if (i == threads.size() - 1) n += m_particles.size() % threads.size();
+
+        threads[i] =
+            std::thread(probabilistic_fitness_selection_inner, std::ref(new_particles), start, n);
+    }
+
+    for (std::thread& thread : threads)
+    {
+        thread.join();
     }
 
     return new_particles;
 }
 
-void MCL::resample_particles()
+void MCL::resample_particles(int n_threads)
 {
-    std::vector<Particle> new_particles = probabilistic_fitness_selection();
+    std::vector<Particle> new_particles = probabilistic_fitness_selection(n_threads);
     std::swap(new_particles, m_particles);
     std::sort(m_particles.begin(), m_particles.end(), [](const Particle& lhs, const Particle& rhs) {
         return lhs.weight > rhs.weight;

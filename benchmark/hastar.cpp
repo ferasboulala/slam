@@ -18,10 +18,9 @@ static constexpr double VEHICLE_LENGTH = VEL * std::tan(STEERING_ANGLE) / DESIRE
 void benchmark_hastar(benchmark::State &state)
 {
     cv::Mat map = cv::imread(IMG_FILENAME, cv::IMREAD_GRAYSCALE);
-    cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
-    map.convertTo(map, CV_64F);
     const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(KERNEL_SIZE, KERNEL_SIZE));
     cv::erode(map, map, kernel);
+    cv::threshold(map, map, 128, 255, cv::THRESH_BINARY);
 
     const slam::Pose A{400, 450, 0};
     const slam::Pose B{700, 150, 0};

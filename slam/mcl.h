@@ -30,10 +30,9 @@ public:
 private:
     void reset_particles();
     void filter_particles();
-    void resample_particles();
+    void resample_particles(int n_threads);
 
-    std::vector<Particle> fitness_selection();
-    std::vector<Particle> probabilistic_fitness_selection();
+    std::vector<Particle> probabilistic_fitness_selection(int n_threads);
 
     void update_inner(const std::vector<std::tuple<double, double>>& scan,
                       double stddev,

@@ -51,6 +51,52 @@ Pose raycast<double>(const cv::Mat& map,
 }
 
 template <>
+Pose raycast<unsigned char>(const cv::Mat& map,
+                            const Pose& pose,
+                            double max_distance_squared,
+                            double step_size)
+{
+    const double dx = step_size * std::cos(pose.theta);
+    const double dy = step_size * std::sin(pose.theta);
+
+    double x = pose.x;
+    double y = pose.y;
+
+    auto coord = pose_to_image_coordinates(map, {x, y, 0});
+    auto [i, j] = coord;
+
+    int prev_i = i;
+    int prev_j = j;
+
+    while (true)
+    {
+        x += dx;
+        y += dy;
+
+        coord = pose_to_image_coordinates(map, {x, y, 0});
+        std::tie(i, j) = coord;
+
+        if (prev_i == i && prev_j == j)
+        {
+            continue;
+        }
+
+        const double d = euclidean_distance_squared(x, y, pose.x, pose.y);
+        if (d >= max_distance_squared) return {-1, -1, pose.theta};
+
+        if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};
+
+        if (map.at<unsigned char>(i, j) < 128)  // probability that it is free
+        {
+            return {x, y, pose.theta};
+        }
+
+        prev_i = i;
+        prev_j = j;
+    }
+}
+
+template <>
 Pose raycast<int>(const cv::Mat& map,
                   const Pose& pose,
                   double max_distance_squared,

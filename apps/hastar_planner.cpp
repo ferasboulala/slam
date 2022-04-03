@@ -8,7 +8,6 @@
 
 static slam::HybridAStar* finder;
 static cv::Mat map;
-static cv::Mat map_;
 static cv::Mat color_map;
 static slam::Coordinate A{-1, -1};
 static slam::Coordinate B{-1, -1};
@@ -33,17 +32,17 @@ void mouse_callback(int event, int x, int y, int, void*)
         case cv::EVENT_LBUTTONDOWN:
             A = slam::Coordinate{y, x};
             changed = true;
-            cv::cvtColor(map_, color_map, cv::COLOR_GRAY2RGB);
-            cv::circle(color_map, {x, y}, POINT_SIZE, RED, cv::FILLED);
-            if (B.i != -1) cv::circle(color_map, {B.j, B.i}, POINT_SIZE, CYAN, cv::FILLED);
+            cv::cvtColor(map, color_map, cv::COLOR_GRAY2RGB);
+            cv::circle(color_map, {x, y}, POINT_SIZE, {0, 0, 255}, cv::FILLED);
+            if (B.i != -1) cv::circle(color_map, {B.j, B.i}, POINT_SIZE, {255, 0, 0}, cv::FILLED);
             break;
         case cv::EVENT_RBUTTONDOWN:
         {
             B = slam::Coordinate{y, x};
             changed = true;
-            cv::cvtColor(map_, color_map, cv::COLOR_GRAY2RGB);
-            if (A.i != -1) cv::circle(color_map, {A.j, A.i}, POINT_SIZE, RED, cv::FILLED);
-            cv::circle(color_map, {x, y}, POINT_SIZE, CYAN, cv::FILLED);
+            cv::cvtColor(map, color_map, cv::COLOR_GRAY2RGB);
+            if (A.i != -1) cv::circle(color_map, {A.j, A.i}, POINT_SIZE, {0, 0, 255}, cv::FILLED);
+            cv::circle(color_map, {x, y}, POINT_SIZE, {255, 0, 0}, cv::FILLED);
             break;
         }
         default:
@@ -77,7 +76,7 @@ void mouse_callback(int event, int x, int y, int, void*)
         const std::vector<slam::Coordinate> path = finder->recover_path();
         for (const slam::Coordinate& coord : path)
         {
-            cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, GREEN, 2);
+            cv::line(color_map, {prev.j, prev.i}, {coord.j, coord.i}, {0, 255, 0}, 2);
             prev = coord;
         }
 
@@ -101,18 +100,16 @@ int main(int argc, char** argv)
     draw = std::string(argv[3]) == "draw";
 
     map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
-    cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
-    map.convertTo(map, CV_64F);
     const cv::Mat kernel =
         cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernel_size, kernel_size));
     cv::erode(map, map, kernel);
+    cv::threshold(map, map, 128, 255, cv::THRESH_BINARY);
 
     cv::namedWindow("hastar");
     cv::setMouseCallback("hastar", mouse_callback);
 
     cv::imshow("hastar", map);
-    map.convertTo(map_, CV_32F);
-    cv::cvtColor(map_, color_map, cv::COLOR_GRAY2RGB);
+    cv::cvtColor(map, color_map, cv::COLOR_GRAY2RGB);
     finder = new slam::HybridAStar(map, {}, {}, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
     while (true)
     {

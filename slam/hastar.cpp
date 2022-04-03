@@ -107,7 +107,7 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
     // Assuming src is a valid starting point
     const Coordinate dst_coord = pose_to_image_coordinates_(m_map, dst);
     if (!within_boundaries(m_map, dst_coord)) return false;
-    if (m_map.at<double>(dst_coord.i, dst_coord.j) < 0.5) return false;
+    if (m_map.at<unsigned char>(dst_coord.i, dst_coord.j) < 0.5) return false;
 
     const double dist_squared = euclidean_distance_squared(src, dst);
     const double dx = dst.x - src.x;
@@ -118,7 +118,7 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
     raycast_pose.theta = angle;
 
     // FIXME : Use circular raycast
-    return raycast<double>(m_map, raycast_pose, dist_squared).x == -1;
+    return raycast<unsigned char>(m_map, raycast_pose, dist_squared).x == -1;
 }
 
 bool HybridAStar::pathfind(cv::Mat* canvas)
