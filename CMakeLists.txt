@@ -61,3 +61,4 @@ app("regions" "apps/regions.cpp")
 
 app("benchmark_hastar" "benchmark/hastar.cpp")
 app("benchmark_rrtstar" "benchmark/rrtstar.cpp")
+app("benchmark_mcl" "benchmark/mcl.cpp")
