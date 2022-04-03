@@ -99,18 +99,19 @@ int main(int argc, char** argv)
     while (true)
     {
         map_image_frame = mcl.get_particles().front().map.clone();
-        map_image_frame.convertTo(map_image_frame, CV_32FC3);
+        // unquantized
+        // map_image_frame.convertTo(map_image_frame, CV_32FC3);
         cv::cvtColor(map_image_frame, map_image_frame, cv::COLOR_GRAY2RGB);
         for (const slam::Particle& particle : mcl.get_particles())
         {
-            draw_particle(map_image_frame, particle.pose, GREEN, 5, true);
+            draw_particle(map_image_frame, particle.pose, {0, 255, 0}, 5, true);
         }
 
         const slam::Pose& average_pose = slam::average_pose(mcl.get_particles());
-        draw_particle(map_image_frame, average_pose, RED, 5, true);
+        draw_particle(map_image_frame, average_pose, {0, 0, 255}, 5, true);
         draw_particle(map_image_frame,
                       slam::MCL::sensor_position(average_pose, SCANNER_OFFSET),
-                      RED,
+                      {0, 0, 255},
                       3,
                       true);
 

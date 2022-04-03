@@ -16,9 +16,8 @@ Pose raycast<double>(const cv::Mat& map,
     double x = pose.x;
     double y = pose.y;
 
-    int i, j;
     auto coord = pose_to_image_coordinates(map, {x, y, 0});
-    std::tie(i, j) = coord;
+    auto [i, j] = coord;
 
     int prev_i = i;
     int prev_j = j;
@@ -64,8 +63,7 @@ Pose raycast<int>(const cv::Mat& map,
     double y = pose.y;
 
     auto coord = pose_to_image_coordinates(map, {x, y, 0});
-    int i = std::get<0>(coord);
-    int j = std::get<1>(coord);
+    auto [i, j] = coord;
 
     int prev_i = i;
     int prev_j = j;
@@ -95,7 +93,7 @@ Pose raycast<int>(const cv::Mat& map,
     }
 }
 
-void raycast_mapping(Particle& particle, double z_squared, double z_max_squared, double step_size)
+Pose raycast_mapping(Particle& particle, double z_squared, double z_max_squared, double step_size)
 {
     assert(z_squared <= z_max_squared);
 
@@ -106,13 +104,16 @@ void raycast_mapping(Particle& particle, double z_squared, double z_max_squared,
     double y = particle.pose.y;
 
     auto coord = pose_to_image_coordinates(particle.map, {x, y, 0});
-    int i = std::get<0>(coord);
-    int j = std::get<1>(coord);
+    auto [i, j] = coord;
 
     int prev_i = i;
     int prev_j = j;
 
-    while (true)
+    Pose hit = {-1, -1, particle.pose.theta};
+    bool drew = false;
+    bool foundHit = false;
+
+    while (!drew || !foundHit)
     {
         x += dx;
         y += dy;
@@ -125,28 +126,56 @@ void raycast_mapping(Particle& particle, double z_squared, double z_max_squared,
             continue;
         }
 
-        if (!within_boundaries(particle.map, i, j)) return;
+        if (!within_boundaries(particle.map, i, j)) break;
 
         constexpr double L0 = 0.5;
         constexpr double Locc = 0.3;
         constexpr double Lfree = 0.7;
+        constexpr unsigned char Lfree_div_L0 = 2;
+
+        // This must run before the map update below.
+        if (!foundHit &&
+            particle.map.at<unsigned char>(i, j) < 128)  // quantized probability that it is free
+        {
+            hit.x = x;
+            hit.y = y;
+            foundHit = true;
+        }
 
         const double distance_squared =
             euclidean_distance_squared(x, y, particle.pose.x, particle.pose.y);
+
         if (distance_squared < z_squared)
         {
-            particle.map.at<double>(i, j) *= Lfree / L0;
-            particle.map.at<double>(i, j) = std::min(1.0, particle.map.at<double>(i, j));
+            // unquantized
+            // particle.map.at<double>(i, j) *= Lfree / L0;
+            // particle.map.at<double>(i, j) = std::min(1.0, particle.map.at<double>(i, j));
+
+            const unsigned char old_value = particle.map.at<unsigned char>(i, j);
+            particle.map.at<unsigned char>(i, j) *= Lfree_div_L0;
+            if (old_value > particle.map.at<unsigned char>(i, j))
+            {
+                particle.map.at<unsigned char>(i, j) = 255;
+            }
         }
         else
         {
-            if (z_squared != z_max_squared) particle.map.at<double>(i, j) *= Locc / L0;
-            break;
+            if (!drew && z_squared != z_max_squared)
+            {
+                // unquantized
+                // particle.map.at<double>(i, j) *= Locc / L0;
+                particle.map.at<unsigned char>(i, j) /= Lfree_div_L0;
+            }
+            drew = true;
         }
+
+        if (distance_squared >= z_max_squared) break;
 
         prev_i = i;
         prev_j = j;
     }
+
+    return hit;
 }
 
 double measurement_model_beam(double distance_squared,
@@ -155,8 +184,7 @@ double measurement_model_beam(double distance_squared,
                               double max_distance_squared,
                               double step_size)
 {
-    const Pose hit = raycast<double>(particle.map, particle.pose, max_distance_squared);
-    raycast_mapping(particle, distance_squared, max_distance_squared, step_size);
+    const Pose hit = raycast_mapping(particle, distance_squared, max_distance_squared, step_size);
 
     constexpr double EPSILON = 0.1;
     if (hit.x == -1)  // no hit

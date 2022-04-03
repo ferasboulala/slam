@@ -19,6 +19,9 @@ HybridAStar::HybridAStar(const cv::Mat& map,
                          bool diff_drive)
 {
     reset(map, A, B, v, theta, length, theta_res, branching_factor, tol, diff_drive);
+    m_comp = [this](const Node& X, const Node& Y) {
+        return X.cost + X.dist_to_target > Y.cost + Y.dist_to_target;
+    };
 }
 
 void HybridAStar::reset(const cv::Mat& map,
@@ -49,10 +52,6 @@ void HybridAStar::reset(const cv::Mat& map,
     m_cuboid.resize(map.rows * map.cols * theta_res);
 
     m_target = pose_to_cuboid_index(B);
-
-    m_comp = [this](const Node& X, const Node& Y) {
-        return X.cost + X.dist_to_target > Y.cost + Y.dist_to_target;
-    };
 
     const CuboidIndex start = pose_to_cuboid_index(A);
     m_q.clear();

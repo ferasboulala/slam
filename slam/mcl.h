@@ -32,8 +32,8 @@ private:
     void filter_particles();
     void resample_particles();
 
-    std::vector<Particle> fitness_selection(int n);
-    std::vector<Particle> probabilistic_fitness_selection(int n);
+    std::vector<Particle> fitness_selection();
+    std::vector<Particle> probabilistic_fitness_selection();
 
     void update_inner(const std::vector<std::tuple<double, double>>& scan,
                       double stddev,

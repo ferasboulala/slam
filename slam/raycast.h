@@ -16,15 +16,15 @@ Pose raycast(const cv::Mat& map,
              double max_distance_squared,
              double step_size = 0.5);
 
-void raycast_mapping(Particle& particle,
+Pose raycast_mapping(Particle& particle,
                      double z_squared,
                      double z_max_squared,
-                     double step_size = 0.5);
+                     double step_size = 1);
 
 double measurement_model_beam(double distance_squared,
                               double stddev,
                               Particle& particle,
                               double max_distance_squared,
-                              double step_size = 0.5);
+                              double step_size = 1);
 
 }  // namespace slam

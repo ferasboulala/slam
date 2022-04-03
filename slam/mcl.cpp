@@ -26,7 +26,8 @@ Pose MCL::starting_pose() const
 
 void MCL::reset_particles()
 {
-    const auto blank_canvas = cv::Mat(m_canvas_size, CV_64F, cv::Scalar(0.5));
+    // Maps are quantized
+    const auto blank_canvas = cv::Mat(m_canvas_size, CV_8UC1, cv::Scalar(128));
     const double uniform_weight = 1.0 / m_particles.size();
     const Pose center = starting_pose();
     for (Particle& particle : m_particles)
@@ -143,7 +144,7 @@ void MCL::update(const std::vector<std::tuple<double, double>>& scan,
     resample_particles();
 }
 
-std::vector<Particle> MCL::probabilistic_fitness_selection(int n)
+std::vector<Particle> MCL::probabilistic_fitness_selection()
 {
     // O(nlog m) where m = particles.size()
     double sum = 0;
@@ -165,8 +166,8 @@ std::vector<Particle> MCL::probabilistic_fitness_selection(int n)
     }
 
     std::vector<Particle> new_particles;
-    new_particles.reserve(n);
-    for (int k = 0; k < n; ++k)
+    new_particles.reserve(m_particles.size());
+    for (unsigned k = 0; k < m_particles.size(); ++k)
     {
         const double cutoff = distribution(generator);
         int i = 0;
@@ -199,7 +200,7 @@ std::vector<Particle> MCL::probabilistic_fitness_selection(int n)
 
 void MCL::resample_particles()
 {
-    std::vector<Particle> new_particles = probabilistic_fitness_selection(m_particles.size());
+    std::vector<Particle> new_particles = probabilistic_fitness_selection();
     std::swap(new_particles, m_particles);
     std::sort(m_particles.begin(), m_particles.end(), [](const Particle& lhs, const Particle& rhs) {
         return lhs.weight > rhs.weight;
