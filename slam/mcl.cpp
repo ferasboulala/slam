@@ -212,6 +212,13 @@ std::vector<Particle> MCL::probabilistic_fitness_selection(int n_threads)
 
         threads[i] =
             std::thread(probabilistic_fitness_selection_inner, std::ref(new_particles), start, n);
+
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(i % std::thread::hardware_concurrency(), &cpuset);
+        const int rc =
+            pthread_setaffinity_np(threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
+        assert(!rc);
     }
 
     for (std::thread& thread : threads)
