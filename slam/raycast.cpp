@@ -175,9 +175,8 @@ Pose raycast_mapping(Particle& particle, double z_squared, double z_max_squared,
         if (!within_boundaries(particle.map, i, j)) break;
 
         constexpr double L0 = 0.5;
-        constexpr double Locc = 0.3;
-        constexpr double Lfree = 0.7;
-        constexpr unsigned char Lfree_div_L0 = 2;
+        constexpr double Locc = 0.40;
+        constexpr double Lfree = 0.60;
 
         // This must run before the map update below.
         if (!foundHit &&
@@ -193,24 +192,18 @@ Pose raycast_mapping(Particle& particle, double z_squared, double z_max_squared,
 
         if (distance_squared < z_squared)
         {
-            // unquantized
-            // particle.map.at<double>(i, j) *= Lfree / L0;
-            // particle.map.at<double>(i, j) = std::min(1.0, particle.map.at<double>(i, j));
-
-            const unsigned char old_value = particle.map.at<unsigned char>(i, j);
-            particle.map.at<unsigned char>(i, j) *= Lfree_div_L0;
-            if (old_value > particle.map.at<unsigned char>(i, j))
-            {
-                particle.map.at<unsigned char>(i, j) = 255;
-            }
+            double p = static_cast<double>(particle.map.at<unsigned char>(i, j)) / 255;
+            p *= Lfree / L0;
+            p = std::min(1.0, p);
+            particle.map.at<unsigned char>(i, j) = static_cast<double>(p * 255);
         }
         else
         {
             if (!drew && z_squared != z_max_squared)
             {
-                // unquantized
-                // particle.map.at<double>(i, j) *= Locc / L0;
-                particle.map.at<unsigned char>(i, j) /= Lfree_div_L0;
+                double p = static_cast<double>(particle.map.at<unsigned char>(i, j)) / 255;
+                p *= Locc / L0;
+                particle.map.at<unsigned char>(i, j) = static_cast<double>(p * 255);
             }
             drew = true;
         }

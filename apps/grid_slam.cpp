@@ -78,18 +78,22 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
 
-    constexpr double FAKE_LIDAR_STDDEV = 5;
+    constexpr double FAKE_LIDAR_STDDEV = 1;
     constexpr double FAKE_LIDAR_MAX_DIST = 500;
     constexpr double FAKE_LIDAR_START_ANGLE = 0;
-    constexpr double FAKE_LIDAR_STOP_ANGLE = M_PI;
-    slam::FakeLidar fake_lidar(
-        FAKE_LIDAR_START_ANGLE, FAKE_LIDAR_STOP_ANGLE, FAKE_LIDAR_MAX_DIST, FAKE_LIDAR_STDDEV, 90);
+    constexpr double FAKE_LIDAR_STOP_ANGLE = 2 * M_PI;
+    constexpr unsigned N_RAYS = 90;
+    slam::FakeLidar fake_lidar(FAKE_LIDAR_START_ANGLE,
+                               FAKE_LIDAR_STOP_ANGLE,
+                               FAKE_LIDAR_MAX_DIST,
+                               FAKE_LIDAR_STDDEV,
+                               N_RAYS);
 
     constexpr slam::Pose SCANNER_OFFSET = {0, 30, 0};
     constexpr unsigned N_PARTICLES = 25;
     slam::MCL mcl(N_PARTICLES, {1600, 900});
 
-    slam::Pose real_position{400, 400, M_PI};
+    slam::Pose real_position{400, 400, M_PI / 90};
 
     // This is the image that is displayed every frame
     cv::Mat map_image_frame;
@@ -122,7 +126,8 @@ int main(int argc, char** argv)
         mcl.predict(odom, {0.0005, 0.0005, 0.01, 0.01});
 
         // Use 0s for alphas meaning no error in the motion
-        real_position = slam::sample_motion_model_odometry(odom, real_position);
+        real_position =
+            slam::sample_motion_model_odometry(odom, real_position, {0.0005, 0.0005, 0.01, 0.01});
 
         if (++frame % EVERY_OTHER == 0)
         {
