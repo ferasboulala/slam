@@ -195,7 +195,9 @@ Pose raycast_mapping(Particle& particle, double z_squared, double z_max_squared,
             double p = static_cast<double>(particle.map.at<unsigned char>(i, j)) / 255;
             p *= Lfree / L0;
             p = std::min(1.0, p);
-            particle.map.at<unsigned char>(i, j) = static_cast<double>(p * 255);
+            const unsigned char p_ =
+                std::max(static_cast<unsigned char>(1), static_cast<unsigned char>(p * 255));
+            particle.map.at<unsigned char>(i, j) = static_cast<double>(p_);
         }
         else
         {
@@ -203,7 +205,9 @@ Pose raycast_mapping(Particle& particle, double z_squared, double z_max_squared,
             {
                 double p = static_cast<double>(particle.map.at<unsigned char>(i, j)) / 255;
                 p *= Locc / L0;
-                particle.map.at<unsigned char>(i, j) = static_cast<double>(p * 255);
+                const unsigned char p_ =
+                    std::max(static_cast<unsigned char>(1), static_cast<unsigned char>(p * 255));
+                particle.map.at<unsigned char>(i, j) = static_cast<double>(p_);
             }
             drew = true;
         }

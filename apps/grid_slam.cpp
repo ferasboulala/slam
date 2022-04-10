@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
 
-    constexpr double FAKE_LIDAR_STDDEV = 1;
+    constexpr double FAKE_LIDAR_STDDEV = 5;
     constexpr double FAKE_LIDAR_MAX_DIST = 500;
     constexpr double FAKE_LIDAR_START_ANGLE = 0;
     constexpr double FAKE_LIDAR_STOP_ANGLE = 2 * M_PI;
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
                                N_RAYS);
 
     constexpr slam::Pose SCANNER_OFFSET = {0, 30, 0};
-    constexpr unsigned N_PARTICLES = 25;
+    constexpr unsigned N_PARTICLES = 1000;
     slam::MCL mcl(N_PARTICLES, {1600, 900});
 
     slam::Pose real_position{400, 400, M_PI / 90};
@@ -123,11 +123,11 @@ int main(int argc, char** argv)
 
         const int key = cv::waitKey(WAIT_TIME);
         const slam::Odometry odom = getUserInput(key);
-        mcl.predict(odom, {0.0005, 0.0005, 0.01, 0.01});
+        mcl.predict(odom, {0.001, 0.001, 0.001, 0.001});
 
         // Use 0s for alphas meaning no error in the motion
-        real_position =
-            slam::sample_motion_model_odometry(odom, real_position, {0.0005, 0.0005, 0.01, 0.01});
+        real_position = slam::sample_motion_model_odometry(
+            odom, real_position, {0.0001, 0.0001, 0.0001, 0.0001});
 
         if (++frame % EVERY_OTHER == 0)
         {
