@@ -68,16 +68,18 @@ slam::Odometry getUserInput(int key)
 
 int main(int argc, char** argv)
 {
-    if (argc < 3)
+    if (argc < 5)
     {
-        log_error("usage : %s map.png n_particles", argv[0]);
+        log_error("usage : %s map.png n_particles canvas_size hz", argv[0]);
         return -1;
     }
 
-    const bool debug = argc > 3;
+    const bool debug = argc > 5;
 
     cv::Mat map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
     const unsigned n_particles = atoi(argv[2]);
+    const unsigned canvas_size = atoi(argv[3]);
+    const unsigned hz = atoi(argv[4]);
 
     // Binary image
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
@@ -95,15 +97,16 @@ int main(int argc, char** argv)
                                N_RAYS);
 
     constexpr slam::Pose SCANNER_OFFSET = {0, 30, 0};
-    slam::MCL mcl(n_particles, {1600, 900});
+    slam::MCL mcl(n_particles, {canvas_size, canvas_size});
 
     slam::Pose real_position{400, 400, M_PI / 90};
 
     // This is the image that is displayed every frame
     cv::Mat map_image_frame;
     const int WAIT_TIME = debug ? 0 : 25;
-    const int EVERY_OTHER = debug ? 1 : 200 / WAIT_TIME;
+    const int EVERY_OTHER = debug ? 1 : std::min(25.f, 1000.f / hz / 25);
     int frame = 0;
+
     while (true)
     {
         map_image_frame = mcl.get_particles().front().map.clone();
@@ -121,14 +124,15 @@ int main(int argc, char** argv)
                       3,
                       true);
 
+        cv::resize(map_image_frame, map_image_frame, cv::Size(1000, 1000), cv::INTER_LINEAR);
         cv::imshow("slam", map_image_frame);
 
         const int key = cv::waitKey(WAIT_TIME);
         const slam::Odometry odom = getUserInput(key);
         mcl.predict(odom, {0.001, 0.001, 0.001, 0.001});
 
-        real_position = slam::sample_motion_model_odometry(
-            odom, real_position, {0.0001, 0.0001, 0.0001, 0.0001});
+        real_position =
+            slam::sample_motion_model_odometry(odom, real_position, {0.001, 0.001, 0.001, 0.001});
 
         if (debug && static_cast<Key>(cv::waitKey(WAIT_TIME)) != Key::U)
         {

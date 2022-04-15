@@ -18,7 +18,7 @@ Pose sample_motion_model_odometry(const Odometry& odom,
         odom.translation -
         sample_normal_distribution(
             std::sqrt(alphas[2] * std::pow(odom.translation, 2) +
-                      alphas[3] * (std::pow(odom.rotation_1, 2) + ::pow(odom.rotation_2, 2))));
+                      alphas[3] * (std::pow(odom.rotation_1, 2) + std::pow(odom.rotation_2, 2))));
     const double rotation_2 =
         odom.rotation_2 -
         sample_normal_distribution(std::sqrt(alphas[0] * std::pow(odom.rotation_2, 2) +
