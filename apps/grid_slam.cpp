@@ -15,7 +15,8 @@ enum class Key : int
     LEFT = 81,
     DOWN = 84,
     RIGHT = 83,
-    Q = 113
+    Q = 113,
+    U = 117
 };
 
 void draw_particle(
@@ -67,13 +68,17 @@ slam::Odometry getUserInput(int key)
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
+    if (argc < 3)
     {
-        log_error("usage : %s map.png", argv[0]);
+        log_error("usage : %s map.png n_particles", argv[0]);
         return -1;
     }
 
+    const bool debug = argc > 3;
+
     cv::Mat map = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+    const unsigned n_particles = atoi(argv[2]);
+
     // Binary image
     cv::threshold(map, map, 128, 1.0, cv::THRESH_BINARY);
     map.convertTo(map, CV_32S);
@@ -90,21 +95,18 @@ int main(int argc, char** argv)
                                N_RAYS);
 
     constexpr slam::Pose SCANNER_OFFSET = {0, 30, 0};
-    constexpr unsigned N_PARTICLES = 1000;
-    slam::MCL mcl(N_PARTICLES, {1600, 900});
+    slam::MCL mcl(n_particles, {1600, 900});
 
     slam::Pose real_position{400, 400, M_PI / 90};
 
     // This is the image that is displayed every frame
     cv::Mat map_image_frame;
-    constexpr int WAIT_TIME = 25;
-    constexpr int EVERY_OTHER = 200 / WAIT_TIME;
+    const int WAIT_TIME = debug ? 0 : 25;
+    const int EVERY_OTHER = debug ? 1 : 200 / WAIT_TIME;
     int frame = 0;
     while (true)
     {
         map_image_frame = mcl.get_particles().front().map.clone();
-        // unquantized
-        // map_image_frame.convertTo(map_image_frame, CV_32FC3);
         cv::cvtColor(map_image_frame, map_image_frame, cv::COLOR_GRAY2RGB);
         for (const slam::Particle& particle : mcl.get_particles())
         {
@@ -125,9 +127,13 @@ int main(int argc, char** argv)
         const slam::Odometry odom = getUserInput(key);
         mcl.predict(odom, {0.001, 0.001, 0.001, 0.001});
 
-        // Use 0s for alphas meaning no error in the motion
         real_position = slam::sample_motion_model_odometry(
             odom, real_position, {0.0001, 0.0001, 0.0001, 0.0001});
+
+        if (debug && static_cast<Key>(cv::waitKey(WAIT_TIME)) != Key::U)
+        {
+            continue;
+        }
 
         if (++frame % EVERY_OTHER == 0)
         {
