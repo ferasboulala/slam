@@ -1,4 +1,6 @@
+#include <chrono>
 #include <cmath>
+#include <functional>
 #include <string>
 
 #include "colors.h"
@@ -23,6 +25,27 @@ static constexpr double VEHICLE_LENGTH =
     VEL * std::tan(STEERING_ANGLE) / DESIRED_DELTA_STEERING_ANGLE;
 
 static constexpr int POINT_SIZE = 7;
+
+template <typename Func, typename... Args, typename TimeDuration = std::chrono::milliseconds>
+static auto measure_time(Func func, Args&&... args)
+{
+    using FuncReturnType = decltype(func(std::forward<Args>(args)...));
+
+    const auto start = std::chrono::high_resolution_clock::now();
+    if constexpr (std::is_same_v<void, FuncReturnType>)
+    {
+        func(std::forward<Args>(args)...);
+        auto end = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<TimeDuration>(end - start).count();
+    }
+    else
+    {
+        FuncReturnType ret = func(std::forward<Args>(args)...);
+        auto end = std::chrono::high_resolution_clock::now();
+        return std::tuple<FuncReturnType, uint64_t>{
+            ret, std::chrono::duration_cast<TimeDuration>(end - start).count()};
+    }
+}
 
 void mouse_callback(int event, int x, int y, int, void*)
 {
@@ -62,15 +85,20 @@ void mouse_callback(int event, int x, int y, int, void*)
         B_pose.theta = M_PI / 2;
         finder->reset(map, A_pose, B_pose, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
         cv::Mat* canvas = draw ? &color_map : nullptr;
-        while (!finder->pathfind(canvas))
+        const auto solve = [&]()
         {
-            if (draw)
+            while (!finder->pathfind(canvas))
             {
-                cv::imshow("hastar", *canvas);
-                const int key = cv::waitKey(1);
-                if (key == 113) exit(0);
+                if (draw)
+                {
+                    cv::imshow("hastar", *canvas);
+                    const int key = cv::waitKey(1);
+                    if (key == 113) exit(0);
+                }
             }
-        }
+        };
+
+        const auto duration_ms = measure_time(solve);
 
         slam::Coordinate prev = A;
         const std::vector<slam::Coordinate> path = finder->recover_path();
@@ -84,7 +112,7 @@ void mouse_callback(int event, int x, int y, int, void*)
         if (path.empty())
             log_info("No path found path after %u states explored", finder->size());
         else
-            log_info("Found path after %u states explored", finder->size());
+            log_info("Found path after %u states explored in %d ms", finder->size(), duration_ms);
     }
 }
 

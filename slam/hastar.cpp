@@ -19,10 +19,13 @@ HybridAStar::HybridAStar(const cv::Mat& map,
                          bool diff_drive)
 {
     reset(map, A, B, v, theta, length, theta_res, branching_factor, tol, diff_drive);
-    m_comp = [this](const Node& X, const Node& Y) {
-        return X.cost + X.dist_to_target > Y.cost + Y.dist_to_target;
-    };
+    m_comp = [this](const Node& X, const Node& Y)
+    { return X.cost + X.dist_to_target > Y.cost + Y.dist_to_target; };
 }
+
+// Optimization: Accounts for 6% of the runtime. Worse if the path is easy to find. This is because
+// we reset all values in the cuboid. We can use a sequence number instead to avoid having to reset
+// all of them.
 
 void HybridAStar::reset(const cv::Mat& map,
                         const Pose& A,
@@ -49,12 +52,13 @@ void HybridAStar::reset(const cv::Mat& map,
     m_diff_drive = diff_drive;
 
     m_cuboid.clear();
-    m_cuboid.resize(map.rows * map.cols * theta_res);
+    m_cuboid.resize(map.rows * map.cols * theta_res, CuboidEntry());
 
     m_target = pose_to_cuboid_index(B);
 
     const CuboidIndex start = pose_to_cuboid_index(A);
     m_q.clear();
+    m_q.reserve(MAX_QUEUE_SIZE);
     m_q.push_back({A, 0.0, euclidean_distance(A, B), start});
     std::push_heap(m_q.begin(), m_q.end(), m_comp);
 
@@ -76,6 +80,11 @@ void HybridAStar::reset(const cv::Mat& map,
     m_velocities[1] = -v;
 }
 
+// Optimization [1.54]: vel, m_length and angle are all known values. They should be precomputed.
+
+// Optimization [~6]: All angle offsets are known ahead of time. Also, given that there is an angle
+// resolution for memoization, sine and cosine functions can be precomputed.
+
 std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose& pose) const
 {
     std::vector<std::pair<Pose, double>> neighborhood;
@@ -87,11 +96,11 @@ std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose&
         const double cost_factor = vel < 0 ? REVERSE_FACTOR : 1;  // more costly to go backwards
         for (unsigned i = 0; i < m_thetas.size(); ++i)
         {
-            const double angle = m_thetas[i];
+            const double steer = m_thetas[i];
             const double cost = m_steering_costs[i];
 
             Pose new_pose = pose;
-            new_pose.theta += vel / m_length * std::tan(angle);
+            new_pose.theta += vel / m_length * std::tan(steer);
             new_pose.x += vel * std::cos(new_pose.theta);
             new_pose.y += vel * std::sin(new_pose.theta);
 
@@ -102,6 +111,15 @@ std::vector<std::pair<Pose, double>> HybridAStar::steering_adjacency(const Pose&
     return neighborhood;
 }
 
+// Optimization [3.33 + 2.37 = 5.7]: We are computing the x and y displacements to do an `atan2`
+// operation and retrieve the angle. This is pointless given that we are calling sin and cos to
+// retrieve dx and dy again.
+
+// Optimization: The main loop of the raycast algorithm can be speeded up by a factor of the length
+// of SIMD instructions. We can look at many cells at a time instead of doing it in a scalar way.
+
+// Optimization: The raycast checks if the indices are in boundaries. We can filter that check by
+// giving a maximum distance that does not make it go out of boundaries.
 bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
 {
     // Assuming src is a valid starting point
@@ -120,6 +138,16 @@ bool HybridAStar::can_reach(const Pose& src, const Pose& dst) const
     // FIXME : Use circular raycast
     return raycast<unsigned char>(m_map, raycast_pose, dist_squared).x == -1;
 }
+
+// Optimization: Use https://github.com/skarupke/heap/blob/master/minmax_and_dary_heap.hpp to
+// speedup heap operations. This will likely have a 2x speedup in heap pop operations.
+
+// Optimization: Before adding an entry in the heap, check if it will not be immediately invalidated
+// when taken from the heap.
+
+// Optimization: Add a straight line checker (single raycast).
+
+// Optimization: Use a different heuristic.
 
 bool HybridAStar::pathfind(cv::Mat* canvas)
 {
@@ -162,6 +190,9 @@ bool HybridAStar::pathfind(cv::Mat* canvas)
             std::tie(pose, cost) = neighbor;
 
             if (!can_reach(X.pose, pose)) continue;
+            const CuboidIndex Y_index = pose_to_cuboid_index(pose);
+            if (X.cost + cost >= cuboid_at(Y_index).cost) continue;
+
             m_q.emplace_back(pose, X.cost + cost, euclidean_distance(pose, m_B), X_index);
             std::push_heap(m_q.begin(), m_q.end(), m_comp);
 

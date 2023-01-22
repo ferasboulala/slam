@@ -8,7 +8,7 @@
 #define DEG2RAD(x) (x * M_PI / 180)
 
 static const char *IMG_FILENAME = "/home/ubuntu/Documents/slam/assets/floor_plan.png";
-static constexpr unsigned N_BENCHMARK_ITER = 50;
+static constexpr unsigned N_BENCHMARK_ITER = 200;
 static constexpr unsigned KERNEL_SIZE = 15;
 static constexpr double VEL = 10;
 static constexpr double STEERING_ANGLE = DEG2RAD(40);
@@ -22,8 +22,8 @@ void benchmark_hastar(benchmark::State &state)
     cv::erode(map, map, kernel);
     cv::threshold(map, map, 128, 255, cv::THRESH_BINARY);
 
-    const slam::Pose A{400, 450, 0};
-    const slam::Pose B{700, 150, 0};
+    const slam::Pose A = slam::image_coordinates_to_pose(map, {250, 450});
+    const slam::Pose B = slam::image_coordinates_to_pose(map, {650, 250});
 
     auto finder = slam::HybridAStar(map, A, B, VEL, STEERING_ANGLE, VEHICLE_LENGTH, 5, 3, 5, true);
 

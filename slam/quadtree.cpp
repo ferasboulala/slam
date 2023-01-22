@@ -86,7 +86,6 @@ void QuadTree::add(const Coordinate& point, void* data)
     add_helper(m_root, point, data);
 }
 
-#include "thirdparty/log.h"
 void QuadTree::range_query_helper(const Node* root,
                                   const Coordinate& start,
                                   const Coordinate& stop,

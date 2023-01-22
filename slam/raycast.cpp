@@ -82,6 +82,7 @@ Pose raycast<unsigned char>(const cv::Mat& map,
         }
 
         const double d = euclidean_distance_squared(x, y, pose.x, pose.y);
+
         if (d >= max_distance_squared) return {-1, -1, pose.theta};
 
         if (!within_boundaries(map, i, j)) return {-1, -1, pose.theta};

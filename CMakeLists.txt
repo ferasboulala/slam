@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 2.8.17)
 
 project(slam)
 
-add_compile_options(-O2 -march=native -g -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17 -fverbose-asm -save-temps)
+add_compile_options(-Ofast -g -march=native -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17 -fverbose-asm -save-temps)
+set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ALL_LIBRARIES)
-set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin/")
 
 
@@ -62,3 +62,4 @@ app("regions" "apps/regions.cpp")
 app("benchmark_hastar" "benchmark/hastar.cpp")
 app("benchmark_rrtstar" "benchmark/rrtstar.cpp")
 app("benchmark_mcl" "benchmark/mcl.cpp")
+app("benchmark_quadtree" "benchmark/quadtree.cpp")
