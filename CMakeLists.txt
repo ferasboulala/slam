@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.17)
 
 project(slam)
 
-add_compile_options(-Ofast -g -march=native -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17 -fverbose-asm -save-temps)
-set(CMAKE_BUILD_TYPE Debug)
+add_compile_options(-Ofast -march=native -Wall -Wextra -Wpedantic -std=c++17 -std=gnu++17 -fverbose-asm -save-temps)
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ALL_LIBRARIES)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../bin/")

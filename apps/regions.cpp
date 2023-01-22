@@ -7,7 +7,7 @@
 #include "thirdparty/log.h"
 #include "util.h"
 
-//#define DRAW    // Comment to get rid of boundaries
+#define DRAW    // Comment to get rid of boundaries
 
 static slam::QuadTree tree;
 static cv::Mat map;
